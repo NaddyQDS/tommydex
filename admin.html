@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Dex · Pannello admin</title>
+<style>
+  @font-face{font-family:"Press Start 2P";src:url(fonts/press-start-2p-latin-400-normal.woff2) format("woff2");font-display:swap}
+  :root{--ink:#1a1c2c;--paper:#f4f4e8;--blue:#3b5dc9;--green:#38b764;--yellow:#ffcd75;--red:#b13e53;--muted:#566c86;--line:#d9d9cc;
+    --pix:"Press Start 2P",ui-monospace,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:#e9e9dc;color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{background:var(--ink);color:var(--paper);padding:18px 16px}
+  header h1{font-family:var(--pix);font-size:15px;margin:0;letter-spacing:1px}
+  header p{margin:6px 0 0;color:#b8bccb;font-size:14px}
+  main{max-width:860px;margin:0 auto;padding:16px 12px 120px}
+  h2{font-family:var(--pix);font-size:11px;margin:0 0 12px;letter-spacing:.5px;line-height:1.6}
+  .box{background:var(--paper);border:3px solid var(--ink);padding:16px;margin:0 0 18px;box-shadow:4px 4px 0 var(--ink)}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 12px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .grow{flex:1;min-width:160px}
+  label.f{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 4px}
+  input[type=text],input[type=number],input[type=password],textarea,select{width:100%;font:inherit;padding:9px 10px;border:2px solid var(--ink);background:#fff;border-radius:0}
+  textarea{min-height:70px;resize:vertical}
+  input[type=color]{width:46px;height:40px;border:2px solid var(--ink);padding:2px;background:#fff}
+  .btn{display:inline-flex;align-items:center;gap:6px;font:700 14px system-ui,sans-serif;padding:10px 14px;border:2px solid var(--ink);
+    background:#fff;color:var(--ink);cursor:pointer;box-shadow:3px 3px 0 var(--ink);text-decoration:none;white-space:nowrap}
+  .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+  .btn.p{background:var(--blue);color:#fff}
+  .btn.g{background:var(--green);color:#fff}
+  .btn.r{background:#fff;color:var(--red);border-color:var(--red);box-shadow:3px 3px 0 var(--red)}
+  .btn.s{padding:6px 10px;font-size:13px}
+  .btn:disabled{opacity:.45;cursor:default}
+  .pill{font:700 11px system-ui;padding:4px 8px;background:var(--line);white-space:nowrap}
+  .pill.ok{background:var(--green);color:#fff}.pill.warn{background:var(--yellow)}.pill.bad{background:var(--red);color:#fff}
+  .status{font-size:14px;padding:10px 12px;background:#fff;border:2px dashed var(--line);margin-top:12px}
+  .status.ok{border-color:var(--green)}.status.err{border-color:var(--red);color:var(--red)}
+  details.help{margin-top:10px;font-size:14px}
+  details.help summary{cursor:pointer;font-weight:700;color:var(--blue)}
+  details.help ol{padding-left:20px;margin:8px 0}
+
+  /* persone */
+  .person{background:#fff;border:2px solid var(--ink);margin:0 0 12px}
+  .person > summary{list-style:none;display:flex;align-items:center;gap:12px;padding:10px 12px;cursor:pointer}
+  .person > summary::-webkit-details-marker{display:none}
+  .person[open] > summary{border-bottom:2px solid var(--ink);background:#f7f7ef}
+  .av{width:48px;height:48px;flex:none;background:var(--c,#999);color:#fff;display:flex;align-items:center;justify-content:center;font:700 16px system-ui;overflow:hidden}
+  .av img{width:100%;height:100%;object-fit:cover}
+  .person .nm{flex:1;min-width:0}
+  .person .nm b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .person .nm small{color:var(--muted)}
+  .pbody{padding:12px 14px 16px}
+  .top{display:grid;grid-template-columns:170px 1fr;gap:16px}
+  @media (max-width:600px){.top{grid-template-columns:1fr}}
+  .cardph{width:170px;height:170px;background:var(--c,#999);border:3px solid var(--ink);display:flex;align-items:center;justify-content:center;
+    color:#fff;font:700 40px system-ui;overflow:hidden;margin-bottom:8px}
+  .cardph img{width:100%;height:100%;object-fit:cover}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+  .g3{display:grid;grid-template-columns:70px 1fr 120px;gap:0 10px}
+  .swatches{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+  .swatches i{width:22px;height:22px;border:2px solid var(--ink);cursor:pointer}
+  .sec{margin-top:18px;border-top:2px dashed var(--line);padding-top:12px}
+  .sec h3{font-family:var(--pix);font-size:9px;margin:0 0 10px;line-height:1.6}
+  .srow{display:grid;grid-template-columns:1fr 120px 70px 34px;gap:8px;align-items:center;margin-bottom:6px}
+  .wrow{display:grid;grid-template-columns:60px 1fr 90px 34px;gap:8px;align-items:center;margin-bottom:6px}
+  .srow input[type=range]{width:100%}
+  .x{width:34px;height:34px;border:2px solid var(--ink);background:#fff;cursor:pointer;font-weight:700}
+  .thumbs{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+  .thumbs img{width:44px;height:44px;object-fit:cover;border:2px solid var(--ink)}
+  .log{font-size:13px;color:var(--red);margin-top:6px}
+  .drop{display:block;border:3px dashed var(--ink);background:#fff;padding:22px;text-align:center;cursor:pointer}
+  .drop.over{background:#fff7dc}
+  .pairs .row{justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0}
+
+  /* barra pubblica */
+  .bar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--paper);padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;z-index:9}
+  .bar .msg{flex:1;min-width:200px;font-size:14px}
+  .bar .btn{box-shadow:3px 3px 0 #000}
+  .banner{background:var(--yellow);border:3px solid var(--ink);padding:12px;margin-bottom:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .banner span{flex:1;min-width:200px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <h1>▶ DEX · PANNELLO ADMIN</h1>
+  <p>Gestisci persone, foto e schede, poi premi <b>Pubblica</b>: il sito si aggiorna da solo.</p>
+</header>
+
+<main>
+  <div class="banner hidden" id="draftBanner">
+    <span id="draftMsg"></span>
+    <button class="btn s" id="useDraft">Continua la bozza</button>
+    <button class="btn s" id="dropDraft">Ricarica dal sito</button>
+  </div>
+
+  <!-- 1. GITHUB -->
+  <section class="box">
+    <h2>1 · COLLEGAMENTO A GITHUB</h2>
+    <p class="sub">Serve solo a chi gestisce il dex, per pubblicare. Il token resta salvato in questo browser e non viene mai messo nel sito.</p>
+    <div class="g2">
+      <div><label class="f">Utente / organizzazione</label><input type="text" id="ghOwner" placeholder="es. mario-rossi"></div>
+      <div><label class="f">Repository</label><input type="text" id="ghRepo" placeholder="es. celibe-dex"></div>
+      <div><label class="f">Branch</label><input type="text" id="ghBranch" value="main"></div>
+      <div><label class="f">Token</label><input type="password" id="ghToken" placeholder="github_pat_…"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn p" id="ghConnect">Collega</button>
+      <button class="btn s" id="ghForget">Dimentica token</button>
+    </div>
+    <div class="status" id="ghStatus">Non collegato.</div>
+    <details class="help">
+      <summary>Come creo il token? (2 minuti)</summary>
+      <ol>
+        <li>Su GitHub apri <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Settings → Developer settings → Fine-grained tokens → Generate new token</a>.</li>
+        <li>Nome: <i>dex-admin</i>. Scadenza: dopo la festa (es. 30 giorni).</li>
+        <li><b>Repository access</b> → <i>Only select repositories</i> → scegli il repository del dex.</li>
+        <li><b>Permissions → Repository permissions → Contents</b> → <i>Read and write</i>.</li>
+        <li>Genera, copia il token e incollalo qui sopra.</li>
+      </ol>
+    </details>
+  </section>
+
+  <!-- 2. IMPOSTAZIONI -->
+  <section class="box">
+    <h2>2 · IMPOSTAZIONI GENERALI</h2>
+    <div class="g2">
+      <div><label class="f">Titolo</label><input type="text" data-cfg="titolo"></div>
+      <div><label class="f">Sottotitolo</label><input type="text" data-cfg="sottotitolo"></div>
+      <div><label class="f">Effetto pixel fotocamera</label>
+        <select data-cfg="pixel">
+          <option value="0">Nessuno</option><option value="480">Leggerissimo</option><option value="360">Leggero</option>
+          <option value="200">Medio</option><option value="128">Forte</option>
+        </select></div>
+      <div><label class="f">Soglia riconoscimento: <span id="thVal"></span></label>
+        <input type="range" data-cfg="soglia" min="0.35" max="0.65" step="0.01" style="width:100%;margin-top:10px"></div>
+    </div>
+    <p class="sub" style="margin-top:8px">Soglia più bassa = più severa (meno scambi di persona, ma più "non riconosciuto"). Consigliato 0.45–0.55.</p>
+  </section>
+
+  <!-- 3. CARICAMENTO IN BLOCCO -->
+  <section class="box">
+    <h2>3 · CARICAMENTO FOTO IN BLOCCO</h2>
+    <p class="sub">Trascina qui tutte le foto insieme, chiamate col nome della persona: <b>marco_1.jpg</b>, <b>marco_2.jpg</b>, <b>luca 1.jpg</b>, <b>Luca Bianchi (3).jpg</b>… Ogni foto viene assegnata alla persona giusta. Se manca una foto scheda, ne viene creata una centrata sul volto.</p>
+    <label class="drop" id="drop">📂 Trascina le foto qui oppure tocca per sceglierle
+      <input type="file" id="bulkIn" accept="image/*" multiple hidden>
+    </label>
+    <label style="display:block;margin-top:10px;font-size:14px"><input type="checkbox" id="bulkCreate" checked> Crea automaticamente le persone che non esistono ancora</label>
+    <div class="status hidden" id="bulkStatus"></div>
+  </section>
+
+  <!-- 4. PERSONE -->
+  <section class="box">
+    <h2>4 · PERSONE <span id="pcount"></span></h2>
+    <div class="row" style="margin-bottom:14px">
+      <input type="text" id="newName" class="grow" placeholder="Nome della nuova persona">
+      <button class="btn p" id="addPerson">+ Aggiungi persona</button>
+    </div>
+    <div id="people"></div>
+  </section>
+
+  <!-- 5. CONTROLLO -->
+  <section class="box pairs">
+    <h2>5 · CONTROLLO RICONOSCIMENTO</h2>
+    <div id="checks"></div>
+  </section>
+</main>
+
+<div class="bar">
+  <span class="msg" id="barMsg">Caricamento…</span>
+  <button class="btn" id="previewBtn">👀 Prova in anteprima</button>
+  <button class="btn g" id="publishBtn">⬆ Pubblica sul sito</button>
+</div>
+
+<script src="lib/face-api.js"></script>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const ls = {
+    get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } },
+    del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  };
+  const slug = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+  const initials = n => (n || "?").split(/\s+/).map(w => w[0]).join("").slice(0,2).toUpperCase();
+  const COLORS = ["#b13e53","#ef7d57","#f28c38","#e0b000","#38b764","#257179","#3b5dc9","#41a6f6","#8e5bd9","#e05fa8","#566c86","#333c57"];
+  const DEF_STATS = ["Resistenza alcolica","Puntualità","Ballo","Simpatia","Orientamento","Sonno"];
+
+  // ---------- STATO ----------
+  let S = { config:{}, data:[], volti:{}, photos:{}, delPhotos:[] };  // photos: id -> dataURL in attesa di pubblicazione
+  const faceThumbs = {};   // anteprime volti caricati in questa sessione
+  const openIds = new Set();
+  let dirty = false;
+
+  function saveDraft(){
+    dirty = true;
+    const ok = ls.set("dex_admin_draft", {...S, savedAt: Date.now()});
+    setBar(ok ? "Modifiche salvate in bozza (non ancora pubblicate)." : "⚠ Bozza troppo grande per il browser: pubblica presto per non perdere le foto.");
+  }
+  let draftT; const saveSoon = () => { clearTimeout(draftT); draftT = setTimeout(saveDraft, 400); };
+  const setBar = m => $("#barMsg").textContent = m;
+
+  // ---------- GITHUB ----------
+  let GH = ls.get("dex_admin_gh", {owner:"", repo:"", branch:"main", token:""});
+  (function guessRepo(){
+    const h = location.hostname.match(/^([^.]+)\.github\.io$/i);
+    if (h && !GH.owner){ GH.owner = h[1]; const seg = location.pathname.split("/").filter(Boolean); GH.repo = seg.length > 1 ? seg[0] : `${h[1]}.github.io`; }
+  })();
+  $("#ghOwner").value = GH.owner; $("#ghRepo").value = GH.repo; $("#ghBranch").value = GH.branch || "main"; $("#ghToken").value = GH.token;
+  const ghOk = () => GH.owner && GH.repo && GH.token;
+  async function gh(path, opt={}){
+    const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}${path}`, {
+      ...opt, headers:{ "Authorization":`Bearer ${GH.token}`, "Accept": opt.accept || "application/vnd.github+json",
+                        "X-GitHub-Api-Version":"2022-11-28", ...(opt.body ? {"Content-Type":"application/json"} : {}) }
+    });
+    if (!r.ok){ let m = r.status + ""; try{ m += " " + (await r.json()).message; }catch(e){} throw new Error(m); }
+    return opt.accept && opt.accept.includes("raw") ? r.text() : r.json();
+  }
+  function ghStatus(msg, cls=""){ const el = $("#ghStatus"); el.textContent = msg; el.className = "status " + cls; }
+  async function ghConnect(){
+    GH = { owner:$("#ghOwner").value.trim(), repo:$("#ghRepo").value.trim(), branch:($("#ghBranch").value.trim() || "main"), token:$("#ghToken").value.trim() };
+    ls.set("dex_admin_gh", GH);
+    if (!ghOk()) return ghStatus("Compila utente, repository e token.", "err");
+    ghStatus("Verifico…");
+    try{
+      const repo = await gh("");
+      if (!repo.permissions || !repo.permissions.push) throw new Error("il token non ha il permesso di scrittura (Contents: Read and write)");
+      ghStatus(`✓ Collegato a ${repo.full_name}. Sito: https://${GH.owner.toLowerCase()}.github.io/${repo.name === GH.owner.toLowerCase()+".github.io" ? "" : repo.name + "/"}`, "ok");
+      return true;
+    }catch(e){ ghStatus("Errore: " + e.message, "err"); return false; }
+  }
+  $("#ghConnect").onclick = async () => { if (await ghConnect() && !dirty) loadFromSite(); };
+  $("#ghForget").onclick = () => { GH.token = ""; $("#ghToken").value = ""; ls.set("dex_admin_gh", GH); ghStatus("Token rimosso da questo browser."); };
+
+  // ---------- CARICAMENTO DATI ----------
+  function parseJs(code){ const w = {}; new Function("window", code)(w); return w; }
+  async function readFile(name){
+    if (ghOk()){
+      try{ return await gh(`/contents/${name}?ref=${encodeURIComponent(GH.branch)}`, {accept:"application/vnd.github.raw+json"}); }
+      catch(e){ if (!String(e.message).startsWith("404")) throw e; return ""; }
+    }
+    const r = await fetch(`${name}?v=${Date.now()}`, {cache:"no-store"});
+    return r.ok ? r.text() : "";
+  }
+  async function loadFromSite(){
+    setBar("Leggo i dati dal sito…");
+    try{
+      const d = parseJs(await readFile("dati.js")), v = parseJs(await readFile("volti.js"));
+      S = { config: Object.assign({titolo:"DEX", sottotitolo:"", soglia:0.5, pixel:360}, d.DEX_CONFIG || {}),
+            data: d.DEX_DATA || [], volti: v.DEX_VOLTI || {}, photos:{}, delPhotos:[] };
+      dirty = false; ls.del("dex_admin_draft");
+      renderAll(); setBar(`Dati caricati dal ${ghOk() ? "repository GitHub" : "sito"}. ${S.data.length} persone.`);
+    }catch(e){ console.error(e); setBar("Errore nel leggere i dati: " + e.message); }
+  }
+
+  // ---------- RICONOSCIMENTO ----------
+  let models = null;
+  function loadModels(){
+    if (models) return models;
+    models = (async () => {
+      try { await faceapi.tf.setBackend("webgl"); } catch(e) {}
+      await faceapi.tf.ready();
+      await faceapi.nets.ssdMobilenetv1.loadFromUri("models");
+      await faceapi.nets.faceLandmark68Net.loadFromUri("models");
+      await faceapi.nets.faceRecognitionNet.loadFromUri("models");
+    })();
+    return models;
+  }
+  async function fileToCanvas(file, max=1280){
+    const url = URL.createObjectURL(file);
+    try{
+      const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = url; });
+      const s = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      return c;
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function analyze(canvas){
+    await loadModels();
+    const res = await faceapi.detectAllFaces(canvas, new faceapi.SsdMobilenetv1Options({minConfidence:0.5})).withFaceLandmarks().withFaceDescriptors();
+    if (!res.length) return null;
+    res.sort((a,b) => b.detection.box.area - a.detection.box.area);
+    return { desc: Array.from(res[0].descriptor, x => Math.round(x*1e5)/1e5), box: res[0].detection.box, count: res.length };
+  }
+  // ritaglio quadrato: centrato sul volto se c'è, altrimenti al centro
+  function squareCrop(canvas, box, out=480){
+    let cx = canvas.width/2, cy = canvas.height/2, size = Math.min(canvas.width, canvas.height);
+    if (box){ cx = box.x + box.width/2; cy = box.y + box.height/2 - box.height*0.08; size = Math.min(Math.max(box.width, box.height) * 2.1, canvas.width, canvas.height); }
+    const x = Math.max(0, Math.min(canvas.width - size, cx - size/2)), y = Math.max(0, Math.min(canvas.height - size, cy - size/2));
+    const c = document.createElement("canvas"); c.width = c.height = out;
+    c.getContext("2d").drawImage(canvas, x, y, size, size, 0, 0, out, out);
+    return c.toDataURL("image/jpeg", 0.85);
+  }
+  async function addFacePhotos(id, files, logEl){
+    const msgs = [];
+    for (const [i, f] of files.entries()){
+      if (logEl) logEl.textContent = `Analizzo foto ${i+1}/${files.length}…`;
+      try{
+        const c = await fileToCanvas(f);
+        const r = await analyze(c);
+        if (!r){ msgs.push(`${f.name}: nessun volto`); continue; }
+        if (r.count > 1) msgs.push(`${f.name}: ${r.count} volti, uso il più grande`);
+        (S.volti[id] = S.volti[id] || []).push(r.desc);
+        (faceThumbs[id] = faceThumbs[id] || []).push(squareCrop(c, r.box, 96));
+        const p = byId(id);
+        if (p && !p.foto && !S.photos[id]){ S.photos[id] = squareCrop(c, r.box); p.foto = `foto/${id}.jpg`; }
+      }catch(e){ msgs.push(`${f.name}: non leggibile`); }
+    }
+    return msgs;
+  }
+
+  // ---------- PERSONE ----------
+  const byId = id => S.data.find(p => p.id === id);
+  function newPerson(nome){
+    nome = nome.trim(); if (!nome) return null;
+    let base = slug(nome) || "persona", id = base, n = 2;
+    while (byId(id)) id = `${base}-${n++}`;
+    const keys = S.data[0] && S.data[0].statistiche ? Object.keys(S.data[0].statistiche) : DEF_STATS;
+    const p = { id, numero: Math.max(0, ...S.data.map(x => +x.numero || 0)) + 1, nome, specie:"", tipo:"", icona:"⭐",
+      colore: COLORS[S.data.length % COLORS.length], foto:"", descrizione:"",
+      statistiche: Object.fromEntries(keys.map(k => [k, 50])), debolezze:[], abilita:"", prova:"" };
+    S.data.push(p);
+    return p;
+  }
+  const photoSrc = p => S.photos[p.id] || (p.foto ? p.foto + (p.foto.includes("?") ? "" : "?v=" + (S.config.versione || "")) : "");
+  const avatar = p => { const src = photoSrc(p); return src ? `<img src="${esc(src)}" onerror="this.remove()" alt="">` : ""; };
+
+  function personHTML(p){
+    const nv = (S.volti[p.id] || []).length;
+    const stats = Object.entries(p.statistiche || {});
+    return `<details class="person" data-id="${esc(p.id)}" style="--c:${esc(p.colore)}" ${openIds.has(p.id) ? "open" : ""}>
+      <summary>
+        <span class="av">${avatar(p) || esc(initials(p.nome))}</span>
+        <span class="nm"><b>#${esc(String(p.numero).padStart(3,"0"))} ${esc(p.nome)}</b><small>${esc(p.specie || "specie?")} · ${esc(p.tipo || "tipo?")}</small></span>
+        <span class="pill ${nv >= 3 ? "ok" : nv ? "warn" : "bad"}">${nv} volti</span>
+        <span class="pill ${photoSrc(p) ? "ok" : "warn"}">${photoSrc(p) ? "foto ✓" : "no foto"}</span>
+        <span class="pill ${p.prova ? "ok" : "warn"}">${p.prova ? "prova ✓" : "no prova"}</span>
+      </summary>
+      <div class="pbody">
+        <div class="top">
+          <div>
+            <div class="cardph">${avatar(p) || esc(initials(p.nome))}</div>
+            <label class="btn s">📷 Foto scheda<input type="file" accept="image/*" hidden data-act="cardphoto"></label>
+          </div>
+          <div>
+            <div class="g2">
+              <div><label class="f">Nome</label><input type="text" data-k="nome" value="${esc(p.nome)}"></div>
+              <div><label class="f">Numero</label><input type="number" data-k="numero" value="${esc(p.numero)}"></div>
+              <div><label class="f">Specie (nome da creatura)</label><input type="text" data-k="specie" value="${esc(p.specie)}"></div>
+              <div><label class="f">Abilità</label><input type="text" data-k="abilita" value="${esc(p.abilita)}"></div>
+              <div><label class="f">Tipo</label><input type="text" data-k="tipo" value="${esc(p.tipo)}"></div>
+              <div><label class="f">Icona tipo (emoji)</label><input type="text" data-k="icona" value="${esc(p.icona)}"></div>
+            </div>
+            <label class="f">Colore</label>
+            <div class="row"><input type="color" data-k="colore" value="${esc(p.colore)}">
+              <div class="swatches">${COLORS.map(c => `<i style="background:${c}" data-color="${c}"></i>`).join("")}</div></div>
+          </div>
+        </div>
+        <label class="f">Descrizione</label><textarea data-k="descrizione">${esc(p.descrizione)}</textarea>
+        <label class="f">⚡ Prova per lo sposo</label><textarea data-k="prova">${esc(p.prova)}</textarea>
+
+        <div class="sec"><h3>STATISTICHE (0–100)</h3>
+          ${stats.map(([k,v],i) => `<div class="srow" data-stat="${i}">
+            <input type="text" value="${esc(k)}" data-sk><input type="range" min="0" max="100" value="${+v||0}" data-sv>
+            <input type="number" min="0" max="100" value="${+v||0}" data-sn><button class="x" data-act="delstat">✕</button></div>`).join("")}
+          <button class="btn s" data-act="addstat">+ statistica</button>
+        </div>
+
+        <div class="sec"><h3>DEBOLEZZE</h3>
+          ${(p.debolezze || []).map((w,i) => `<div class="wrow" data-weak="${i}">
+            <input type="text" value="${esc(w.icona)}" data-wi placeholder="😴"><input type="text" value="${esc(w.nome)}" data-wn placeholder="Nome">
+            <input type="text" value="${esc(w.valore)}" data-wv list="mult" placeholder="2x"><button class="x" data-act="delweak">✕</button></div>`).join("")}
+          <button class="btn s" data-act="addweak">+ debolezza</button>
+        </div>
+
+        <div class="sec"><h3>VOLTI PER IL RICONOSCIMENTO · ${nv}</h3>
+          <p class="sub">3–5 foto del viso, frontali e ben illuminate. Dal telefono puoi anche scattarle al momento.</p>
+          <div class="row">
+            <label class="btn p s">+ Foto volto<input type="file" accept="image/*" multiple hidden data-act="faces"></label>
+            <button class="btn s" data-act="clearfaces" ${nv ? "" : "disabled"}>Svuota volti</button>
+            <span style="flex:1"></span>
+            <button class="btn r s" data-act="delperson">Elimina persona</button>
+          </div>
+          <div class="log"></div>
+          <div class="thumbs">${(faceThumbs[p.id] || []).map(t => `<img src="${t}" alt="">`).join("")}</div>
+        </div>
+      </div>
+    </details>`;
+  }
+  function renderPeople(){
+    $("#people").innerHTML = S.data.map(personHTML).join("") || `<p class="sub">Nessuna persona. Aggiungine una o usa il caricamento in blocco.</p>`;
+    $("#pcount").textContent = `(${S.data.length})`;
+  }
+  function refreshPerson(id){
+    const el = document.querySelector(`.person[data-id="${CSS.escape(id)}"]`), p = byId(id);
+    if (!el || !p) return renderPeople();
+    if (el.open) openIds.add(id);
+    el.outerHTML = personHTML(p);
+  }
+  function refreshSummary(id){
+    const el = document.querySelector(`.person[data-id="${CSS.escape(id)}"]`), p = byId(id);
+    if (!el || !p) return;
+    el.style.setProperty("--c", p.colore);
+    el.querySelector(".nm").innerHTML = `<b>#${esc(String(p.numero).padStart(3,"0"))} ${esc(p.nome)}</b><small>${esc(p.specie || "specie?")} · ${esc(p.tipo || "tipo?")}</small>`;
+    const pills = el.querySelectorAll("summary .pill"); pills[2].className = "pill " + (p.prova ? "ok" : "warn"); pills[2].textContent = p.prova ? "prova ✓" : "no prova";
+  }
+
+  // eventi sulle schede persona (delegati)
+  const people = $("#people");
+  people.addEventListener("toggle", e => { const d = e.target; if (d.classList && d.classList.contains("person")) d.open ? openIds.add(d.dataset.id) : openIds.delete(d.dataset.id); }, true);
+  people.addEventListener("input", e => {
+    const el = e.target, card = el.closest(".person"); if (!card) return;
+    const p = byId(card.dataset.id); if (!p) return;
+    if (el.dataset.k){
+      p[el.dataset.k] = el.dataset.k === "numero" ? (+el.value || 0) : el.value;
+      refreshSummary(p.id);
+    } else if (el.closest(".srow")){
+      const row = el.closest(".srow");
+      if (el.hasAttribute("data-sv")) row.querySelector("[data-sn]").value = el.value;
+      if (el.hasAttribute("data-sn")) row.querySelector("[data-sv]").value = el.value;
+      p.statistiche = Object.fromEntries([...card.querySelectorAll(".srow")].map(r =>
+        [r.querySelector("[data-sk]").value || "?", Math.max(0, Math.min(100, +r.querySelector("[data-sn]").value || 0))]));
+    } else if (el.closest(".wrow")){
+      p.debolezze = [...card.querySelectorAll(".wrow")].map(r => ({icona:r.querySelector("[data-wi]").value, nome:r.querySelector("[data-wn]").value, valore:r.querySelector("[data-wv]").value}));
+    }
+    saveSoon();
+  });
+  people.addEventListener("click", e => {
+    const card = e.target.closest(".person"); if (!card) return;
+    const p = byId(card.dataset.id); if (!p) return;
+    if (e.target.dataset.color){ p.colore = e.target.dataset.color; card.querySelector("[data-k=colore]").value = p.colore; refreshSummary(p.id); return saveSoon(); }
+    const act = e.target.closest("[data-act]") && e.target.closest("[data-act]").dataset.act;
+    if (!act || e.target.tagName === "INPUT") return;
+    if (act === "addstat"){ p.statistiche = {...p.statistiche, ["Nuova " + (Object.keys(p.statistiche||{}).length+1)]:50}; }
+    else if (act === "delstat"){ const i = +e.target.closest(".srow").dataset.stat; p.statistiche = Object.fromEntries(Object.entries(p.statistiche).filter((_,j) => j !== i)); }
+    else if (act === "addweak"){ p.debolezze = [...(p.debolezze||[]), {icona:"", nome:"", valore:"2x"}]; }
+    else if (act === "delweak"){ const i = +e.target.closest(".wrow").dataset.weak; p.debolezze.splice(i,1); }
+    else if (act === "clearfaces"){ delete S.volti[p.id]; delete faceThumbs[p.id]; renderChecks(); }
+    else if (act === "delperson"){
+      if (!confirm(`Eliminare ${p.nome}? Verranno tolti anche i suoi volti e la foto.`)) return;
+      S.data = S.data.filter(x => x !== p); delete S.volti[p.id]; delete S.photos[p.id];
+      if (p.foto) S.delPhotos.push(p.foto.split("?")[0]);
+      openIds.delete(p.id); renderPeople(); renderChecks(); return saveSoon();
+    }
+    else return;
+    refreshPerson(p.id); saveSoon();
+  });
+  people.addEventListener("change", async e => {
+    const el = e.target, card = el.closest(".person"); if (!card || el.type !== "file") return;
+    const p = byId(card.dataset.id), files = [...el.files]; el.value = "";
+    if (!p || !files.length) return;
+    if (el.dataset.act === "cardphoto"){
+      setBar("Preparo la foto scheda…");
+      const c = await fileToCanvas(files[0], 1600);
+      let box = null; try{ const r = await analyze(c); box = r && r.box; }catch(e){}
+      S.photos[p.id] = squareCrop(c, box); p.foto = `foto/${p.id}.jpg`;
+      refreshPerson(p.id); saveDraft();
+    } else if (el.dataset.act === "faces"){
+      const log = card.querySelector(".log");
+      const msgs = await addFacePhotos(p.id, files, log);
+      refreshPerson(p.id);
+      const nl = document.querySelector(`.person[data-id="${CSS.escape(p.id)}"] .log`); if (nl) nl.textContent = msgs.join(" · ");
+      renderChecks(); saveDraft();
+    }
+  });
+  $("#addPerson").onclick = () => {
+    const p = newPerson($("#newName").value); if (!p) return $("#newName").focus();
+    $("#newName").value = ""; openIds.add(p.id); renderPeople(); saveSoon();
+    document.querySelector(`.person[data-id="${CSS.escape(p.id)}"]`).scrollIntoView({behavior:"smooth", block:"start"});
+  };
+  $("#newName").addEventListener("keydown", e => { if (e.key === "Enter") $("#addPerson").click(); });
+
+  // ---------- CARICAMENTO IN BLOCCO ----------
+  function nameFromFile(fn){
+    return fn.replace(/\.[^.]+$/, "").replace(/[\s_\-.]*\(?\d+\)?$/, "").replace(/[_]+/g, " ").trim();
+  }
+  function matchPerson(name){
+    const s = slug(name); if (!s) return null;
+    return S.data.find(p => p.id === s || slug(p.nome) === s) || S.data.find(p => slug(p.nome).split("-")[0] === s) || null;
+  }
+  async function bulk(files){
+    files = files.filter(f => f.type.startsWith("image/") || /\.(jpe?g|png|heic|webp)$/i.test(f.name));
+    if (!files.length) return;
+    const st = $("#bulkStatus"); st.classList.remove("hidden"); st.className = "status";
+    const groups = new Map(), unknown = [];
+    for (const f of files){
+      const nm = nameFromFile(f.name);
+      let p = matchPerson(nm);
+      if (!p && $("#bulkCreate").checked && nm && !/^(img|dsc|photo|foto|image|whatsapp|pxl)\b/i.test(nm)){
+        p = newPerson(nm.replace(/\b\w/g, c => c.toUpperCase()));
+      }
+      if (!p){ unknown.push(f.name); continue; }
+      if (!groups.has(p.id)) groups.set(p.id, []);
+      groups.get(p.id).push(f);
+    }
+    renderPeople();
+    let done = 0; const total = [...groups.values()].reduce((a,g) => a + g.length, 0), errs = [];
+    for (const [id, fs] of groups){
+      st.textContent = `Analizzo ${byId(id).nome}… (${done}/${total} foto)`;
+      errs.push(...await addFacePhotos(id, fs));
+      done += fs.length; refreshPerson(id);
+    }
+    renderChecks(); saveDraft();
+    st.className = "status ok";
+    st.innerHTML = `✓ ${total} foto assegnate a ${groups.size} persone.` +
+      (errs.length ? `<br>⚠ ${esc(errs.join(" · "))}` : "") +
+      (unknown.length ? `<br>⚠ Non assegnate (rinominale col nome della persona): ${esc(unknown.join(", "))}` : "");
+  }
+  const drop = $("#drop");
+  drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+  drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); bulk([...e.dataTransfer.files]); });
+  $("#bulkIn").onchange = e => { const f = [...e.target.files]; e.target.value = ""; bulk(f); };
+
+  // ---------- IMPOSTAZIONI ----------
+  function renderConfig(){
+    document.querySelectorAll("[data-cfg]").forEach(el => { const v = S.config[el.dataset.cfg]; el.value = v ?? ""; });
+    $("#thVal").textContent = (+S.config.soglia || 0.5).toFixed(2);
+  }
+  document.querySelectorAll("[data-cfg]").forEach(el => el.addEventListener("input", () => {
+    const k = el.dataset.cfg;
+    S.config[k] = (k === "soglia" || k === "pixel") ? +el.value : el.value;
+    if (k === "soglia"){ $("#thVal").textContent = (+el.value).toFixed(2); renderChecks(); }
+    saveSoon();
+  }));
+
+  // ---------- CONTROLLO ----------
+  function renderChecks(){
+    const out = [];
+    const noFace = S.data.filter(p => !(S.volti[p.id] || []).length).map(p => p.nome);
+    const few = S.data.filter(p => { const n = (S.volti[p.id] || []).length; return n > 0 && n < 3; }).map(p => p.nome);
+    if (noFace.length) out.push(`<p>❌ <b>Senza volti</b> (non verranno riconosciuti): ${esc(noFace.join(", "))}</p>`);
+    if (few.length) out.push(`<p>⚠ <b>Meno di 3 foto</b> (meglio aggiungerne): ${esc(few.join(", "))}</p>`);
+    const ids = S.data.map(p => p.id).filter(id => (S.volti[id] || []).length);
+    const soglia = +S.config.soglia || 0.5;
+    if (ids.length >= 2 && window.faceapi){
+      const pairs = [];
+      for (let a = 0; a < ids.length; a++) for (let b = a+1; b < ids.length; b++){
+        let min = Infinity;
+        for (const da of S.volti[ids[a]]) for (const db of S.volti[ids[b]]) min = Math.min(min, faceapi.euclideanDistance(da, db));
+        pairs.push({a:ids[a], b:ids[b], d:min});
+      }
+      pairs.sort((x,y) => x.d - y.d);
+      const risky = pairs.filter(p => p.d < soglia + 0.05);
+      out.push(risky.length
+        ? `<p>⚠ <b>Coppie che il sistema potrebbe confondere</b> (aggiungi foto più nitide o abbassa la soglia):</p>` +
+          risky.slice(0,10).map(p => `<div class="row"><span>${esc(byId(p.a).nome)} ↔ ${esc(byId(p.b).nome)}</span><span class="pill ${p.d < soglia ? "bad" : "warn"}">${p.d.toFixed(2)}</span></div>`).join("")
+        : `<p>✓ Nessuna coppia a rischio. La più vicina: ${esc(byId(pairs[0].a).nome)} ↔ ${esc(byId(pairs[0].b).nome)} (${pairs[0].d.toFixed(2)}).</p>`);
+    }
+    if (!out.length) out.push(`<p class="sub">Tutto ok.</p>`);
+    $("#checks").innerHTML = out.join("");
+  }
+
+  function renderAll(){ renderConfig(); renderPeople(); renderChecks(); }
+
+  // ---------- FILE GENERATI ----------
+  function datiJs(){
+    const data = S.data.map(p => ({...p}));
+    return "/* Generato dal pannello admin.html — si può modificare anche a mano */\n" +
+      "window.DEX_CONFIG = " + JSON.stringify(S.config, null, 2) + ";\n\n" +
+      "window.DEX_DATA = " + JSON.stringify(data, null, 2) + ";\n";
+  }
+  function voltiJs(){
+    const v = {}; S.data.forEach(p => { if ((S.volti[p.id] || []).length) v[p.id] = S.volti[p.id]; });
+    return "/* Generato dal pannello admin.html — non modificare a mano */\nwindow.DEX_VOLTI = " + JSON.stringify(v) + ";\n";
+  }
+
+  // ---------- ANTEPRIMA ----------
+  $("#previewBtn").onclick = () => {
+    const data = S.data.map(p => ({...p, foto: photoSrc(p)}));
+    const ok = ls.set("dex_preview", {config:S.config, data, volti:S.volti});
+    if (!ok) return alert("Anteprima troppo grande per il browser: pubblica e prova direttamente il sito.");
+    window.open("index.html#anteprima", "_blank");
+  };
+
+  // ---------- PUBBLICA ----------
+  $("#publishBtn").onclick = async () => {
+    if (!ghOk()){ alert("Prima collega GitHub (sezione 1)."); $("#ghOwner").scrollIntoView({behavior:"smooth"}); return; }
+    const btn = $("#publishBtn"); btn.disabled = true;
+    try{
+      setBar("Pubblico… (1/4) leggo il repository");
+      const ver = Date.now();
+      const ref = await gh(`/git/ref/heads/${encodeURIComponent(GH.branch)}`);
+      const base = await gh(`/git/commits/${ref.object.sha}`);
+      const tree = await gh(`/git/trees/${base.tree.sha}?recursive=1`);
+      const existing = new Set(tree.tree.map(t => t.path));
+
+      setBar("Pubblico… (2/4) carico le foto");
+      const entries = [];
+      const pend = Object.entries(S.photos).filter(([id]) => byId(id));
+      for (const [i, [id, dataUrl]] of pend.entries()){
+        setBar(`Pubblico… (2/4) foto ${i+1}/${pend.length}`);
+        const blob = await gh("/git/blobs", {method:"POST", body: JSON.stringify({content: dataUrl.split(",")[1], encoding:"base64"})});
+        entries.push({path:`foto/${id}.jpg`, mode:"100644", type:"blob", sha: blob.sha});
+        byId(id).foto = `foto/${id}.jpg?v=${ver}`;
+      }
+      for (const path of new Set(S.delPhotos))
+        if (existing.has(path) && !entries.some(e => e.path === path)) entries.push({path, mode:"100644", type:"blob", sha:null});
+
+      setBar("Pubblico… (3/4) salvo dati e volti");
+      S.config.versione = ver;
+      entries.push({path:"dati.js", mode:"100644", type:"blob", content: datiJs()});
+      entries.push({path:"volti.js", mode:"100644", type:"blob", content: voltiJs()});
+      const nt = await gh("/git/trees", {method:"POST", body: JSON.stringify({base_tree: base.tree.sha, tree: entries})});
+      const commit = await gh("/git/commits", {method:"POST", body: JSON.stringify({message:`Aggiornamento dex dal pannello admin (${new Date().toLocaleString("it-IT")})`, tree: nt.sha, parents:[ref.object.sha]})});
+
+      setBar("Pubblico… (4/4) aggiorno il sito");
+      await gh(`/git/refs/heads/${encodeURIComponent(GH.branch)}`, {method:"PATCH", body: JSON.stringify({sha: commit.sha})});
+
+      S.photos = {}; S.delPhotos = []; dirty = false; ls.del("dex_admin_draft");
+      renderPeople();
+      setBar("✓ Pubblicato! Il sito si aggiorna entro 1–2 minuti.");
+    }catch(e){
+      console.error(e);
+      setBar("❌ Errore di pubblicazione: " + e.message + " — le modifiche restano in bozza.");
+    }finally{ btn.disabled = false; }
+  };
+  window.addEventListener("beforeunload", e => { if (dirty){ e.preventDefault(); e.returnValue = ""; } });
+
+  // ---------- AVVIO ----------
+  loadModels().then(() => { renderChecks(); }).catch(e => { console.error(e); setBar("Errore nel caricamento dei modelli di riconoscimento."); });
+  const draft = ls.get("dex_admin_draft", null);
+  (async () => {
+    if (ghOk()) await ghConnect();
+    if (draft && draft.data){
+      S = { config:draft.config || {}, data:draft.data, volti:draft.volti || {}, photos:draft.photos || {}, delPhotos:draft.delPhotos || [] };
+      dirty = true; renderAll();
+      $("#draftBanner").classList.remove("hidden");
+      $("#draftMsg").textContent = `C'è una bozza non pubblicata del ${new Date(draft.savedAt).toLocaleString("it-IT")}.`;
+      setBar("Bozza ripristinata (non ancora pubblicata).");
+    } else await loadFromSite();
+  })();
+  $("#useDraft").onclick = () => $("#draftBanner").classList.add("hidden");
+  $("#dropDraft").onclick = async () => {
+    if (!confirm("Scartare la bozza e ricaricare i dati pubblicati?")) return;
+    $("#draftBanner").classList.add("hidden"); await loadFromSite();
+  };
+})();
+</script>
+<datalist id="mult"><option value="4x"><option value="2x"><option value="1x"><option value="1/2x"><option value="1/4x"><option value="0x"></datalist>
+</body>
+</html>

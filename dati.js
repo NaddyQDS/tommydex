@@ -1,0 +1,111 @@
+/* =========================================================
+   DATI DEL DEX — di solito si modifica dal pannello admin.html
+   =========================================================
+   - id: senza spazi né accenti (serve per collegare i volti)
+   - foto: immagine per la scheda, da mettere nella cartella foto/
+     (se manca, viene mostrato un cerchio con le iniziali)
+   - statistiche: valori da 0 a 100 (puoi cambiare i nomi e il numero di voci)
+   - debolezze: icona (emoji), nome e moltiplicatore, come nel reference
+   - prova: il messaggio per il festeggiato
+*/
+
+window.DEX_CONFIG = {
+  titolo: "CELIBE-DEX",
+  sottotitolo: "Edizione Addio al Celibato",
+  allenatore: "Allenatore: lo Sposo",
+  // Distanza massima per accettare un volto (più bassa = più severa).
+  // 0.45–0.55 è il range tipico. Si regola dalla pagina di setup.
+  soglia: 0.5,
+  // Effetto pixel della fotocamera: 360 = leggero, 200 = medio, 128 = forte, 0 = nessuno
+  pixel: 360
+};
+
+window.DEX_DATA = [
+  {
+    id: "esempio1",
+    numero: 1,
+    nome: "Marco",
+    specie: "Spritzard",
+    tipo: "Aperitivo",
+    icona: "🍹",
+    colore: "#F28C38",
+    foto: "foto/esempio1.jpg",
+    descrizione: "Compare puntuale solo all'ora dell'aperitivo. In natura è stato avvistato raramente prima delle 18:00.",
+    statistiche: {
+      "Resistenza alcolica": 88,
+      "Puntualità": 12,
+      "Ballo": 64,
+      "Simpatia": 91,
+      "Orientamento": 23,
+      "Sonno": 97
+    },
+    debolezze: [
+      { icona: "⏰", nome: "Sveglia", valore: "2x" },
+      { icona: "🥗", nome: "Dieta", valore: "2x" },
+      { icona: "🍕", nome: "Pizza", valore: "1/2x" },
+      { icona: "🎤", nome: "Karaoke", valore: "1x" },
+      { icona: "📵", nome: "No Wi-Fi", valore: "2x" },
+      { icona: "🧊", nome: "Ghiaccio", valore: "1/2x" }
+    ],
+    abilita: "Spritz Infinito",
+    prova: "Per catturare Spritzard devi ordinare il prossimo giro al bancone… parlando solo in rima!"
+  },
+  {
+    id: "esempio2",
+    numero: 2,
+    nome: "Luca",
+    specie: "Calcettone",
+    tipo: "Panchina",
+    icona: "⚽",
+    colore: "#3FA66B",
+    foto: "foto/esempio2.jpg",
+    descrizione: "Si dichiara titolare inamovibile del calcetto del giovedì. I compagni di squadra non confermano.",
+    statistiche: {
+      "Resistenza alcolica": 55,
+      "Puntualità": 70,
+      "Ballo": 18,
+      "Simpatia": 80,
+      "Fiato": 9,
+      "Scuse pronte": 100
+    },
+    debolezze: [
+      { icona: "🏃", nome: "Corsa", valore: "2x" },
+      { icona: "🧦", nome: "Scarpini", valore: "1x" },
+      { icona: "🍺", nome: "Terzo tempo", valore: "1/2x" },
+      { icona: "🟥", nome: "Arbitro", valore: "2x" },
+      { icona: "🌧️", nome: "Pioggia", valore: "2x" },
+      { icona: "📺", nome: "Partita in TV", valore: "1/2x" }
+    ],
+    abilita: "Infortunio Strategico",
+    prova: "Fai 10 palleggi con un oggetto a scelta del gruppo. Se cade prima, offri tu il prossimo shot!"
+  },
+  {
+    id: "esempio3",
+    numero: 3,
+    nome: "Andrea",
+    specie: "Selfiezard",
+    tipo: "Social",
+    icona: "📸",
+    colore: "#8E5BD9",
+    foto: "foto/esempio3.jpg",
+    descrizione: "Non vive un momento finché non l'ha pubblicato nelle storie. Ha 14 filtri preferiti.",
+    statistiche: {
+      "Resistenza alcolica": 40,
+      "Puntualità": 60,
+      "Ballo": 85,
+      "Simpatia": 75,
+      "Batteria telefono": 3,
+      "Follower": 95
+    },
+    debolezze: [
+      { icona: "🔋", nome: "Batteria", valore: "2x" },
+      { icona: "📶", nome: "Senza campo", valore: "2x" },
+      { icona: "💡", nome: "Luce buona", valore: "1/2x" },
+      { icona: "🤳", nome: "Selfie", valore: "1/2x" },
+      { icona: "🙈", nome: "Foto brutte", valore: "2x" },
+      { icona: "🎉", nome: "Feste", valore: "1x" }
+    ],
+    abilita: "Storia in Diretta",
+    prova: "Convinci uno sconosciuto a fare una foto di gruppo con voi, tutti in posa da supereroi!"
+  }
+];

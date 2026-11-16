@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#1a1c2c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Dex</title>
+<style>
+  @font-face{font-family:"Press Start 2P";src:url(fonts/press-start-2p-latin-400-normal.woff2) format("woff2");font-display:swap}
+  @font-face{font-family:"VT323";src:url(fonts/vt323-latin-400-normal.woff2) format("woff2");font-display:swap}
+  :root{
+    --c:#3b5dc9;                 /* colore del tipo (cambia per ogni scheda) */
+    --ink:#1a1c2c;               /* nero 8-bit */
+    --paper:#f4f4e8;             /* bianco "schermo" */
+    --shade:#c2c3c7;
+    --hp-g:#38b764; --hp-y:#ffcd75; --hp-r:#b13e53;
+    --px:4px;                    /* dimensione del "pixel" dei bordi */
+    --safe-t:env(safe-area-inset-top,0px);
+    --safe-b:env(safe-area-inset-bottom,0px);
+    --f-pix:"Press Start 2P",ui-monospace,monospace;
+    --f-txt:"VT323",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--ink);color:var(--ink);font-family:var(--f-txt);font-size:22px;
+    overscroll-behavior:none;-webkit-font-smoothing:none;image-rendering:pixelated}
+  button{font-family:var(--f-pix);cursor:pointer;border:0;color:inherit}
+  .view{position:fixed;inset:0;display:none;flex-direction:column}
+  .view.on{display:flex}
+
+  /* bordo a pixel con angoli "smussati" */
+  .px{position:relative;background:var(--paper);margin:var(--px);
+    box-shadow:0 calc(-1*var(--px)) 0 0 var(--ink),0 var(--px) 0 0 var(--ink),
+               calc(-1*var(--px)) 0 0 0 var(--ink),var(--px) 0 0 0 var(--ink)}
+  /* finestra di dialogo doppio bordo */
+  .dlg{background:var(--paper);border:var(--px) solid var(--ink);box-shadow:inset 0 0 0 var(--px) var(--paper),inset 0 0 0 calc(2*var(--px)) var(--c);
+    padding:14px 16px;position:relative}
+  .blink{animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .more::after{content:"▼";position:absolute;right:12px;bottom:6px;font-size:14px;animation:blink .8s steps(1) infinite}
+
+  .pbtn{font-size:12px;padding:12px 14px;background:var(--paper);color:var(--ink);letter-spacing:1px}
+  .pbtn:active{transform:translate(2px,2px)}
+  .pbtn.c{background:var(--c);color:#fff}
+
+  /* ---------- SPLASH ---------- */
+  #splash{align-items:center;justify-content:center;text-align:center;padding:28px;color:var(--paper);
+    background:var(--ink);background-image:radial-gradient(#ffffff10 1px,transparent 1px);background-size:8px 8px}
+  .logo{font-family:var(--f-pix);font-size:28px;line-height:1.3;color:#ffcd75;
+    text-shadow:4px 4px 0 #b13e53,8px 8px 0 #29366f;letter-spacing:2px}
+  .ball{width:96px;height:96px;margin:0 auto 34px;display:grid;grid-template-columns:repeat(12,1fr);image-rendering:pixelated}
+  .ball i{display:block}
+  #sSub{font-family:var(--f-pix);font-size:10px;margin-top:22px;color:#73eff7;line-height:1.6}
+  #startBtn{margin-top:46px;font-size:16px;background:none;color:var(--paper);padding:10px}
+  #startBtn:disabled{animation:none;opacity:.5}
+  #loadmsg{margin-top:16px;font-size:20px;color:var(--shade);min-height:24px}
+
+  /* ---------- SCANNER ---------- */
+  #scanner{background:var(--ink)}
+  #video{position:absolute;width:2px;height:2px;opacity:0;pointer-events:none}
+  #video.full{inset:0;width:100%;height:100%;opacity:1;object-fit:cover}
+  .screen{position:relative;flex:1;overflow:hidden;background:#000}
+  #pix{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+  .screen::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg,#0000 0 3px,#00000014 3px 4px)}
+  .topbar{position:absolute;left:0;right:0;top:0;padding:calc(10px + var(--safe-t)) 10px 0;display:flex;justify-content:space-between;
+    align-items:flex-start;z-index:3;user-select:none;-webkit-user-select:none}
+  .topbar .px{padding:8px 10px;font-family:var(--f-pix);font-size:11px}
+  .frame{position:absolute;left:50%;top:46%;width:min(70vw,320px);aspect-ratio:3/4;transform:translate(-50%,-50%);z-index:2}
+  .frame i{position:absolute;width:36px;height:36px;border:6px solid #fff;filter:drop-shadow(3px 3px 0 var(--ink))}
+  .frame i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}
+  .frame i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+  .frame i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}
+  .frame i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+  .panel{background:var(--paper);padding:12px 12px calc(14px + var(--safe-b));border-top:var(--px) solid var(--ink)}
+  #say{min-height:86px;font-size:24px;line-height:1.1;margin-bottom:12px}
+  .ctr{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  #scanbtn{flex:1;font-size:16px;padding:18px 10px;background:var(--c);color:#fff;letter-spacing:2px}
+  #scanbtn:active{transform:translate(2px,2px)}
+  #torchBtn.on{background:#ffcd75}
+
+  /* transizione "battaglia" + analisi */
+  #analisi{position:absolute;inset:0;z-index:6;display:none;pointer-events:none}
+  #analisi.on{display:block}
+  #analisi b{position:absolute;left:0;right:0;height:12.5%;background:var(--ink)}
+  #analisi b:nth-child(odd){animation:inL .5s steps(8) forwards}
+  #analisi b:nth-child(even){animation:inR .5s steps(8) forwards}
+  @keyframes inL{from{transform:translateX(-100%)}to{transform:none}}
+  @keyframes inR{from{transform:translateX(100%)}to{transform:none}}
+  #analisi .lbl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:var(--f-pix);font-size:13px;color:var(--paper);
+    white-space:nowrap;opacity:0;animation:show .1s .55s forwards}
+  @keyframes show{to{opacity:1}}
+  .flash{animation:flash .45s steps(2) 1}
+  @keyframes flash{0%,100%{filter:none}50%{filter:invert(1)}}
+
+  /* ---------- SCHEDA ---------- */
+  #scheda{background:var(--paper);overflow-y:auto;-webkit-overflow-scrolling:touch;display:none}
+  #scheda.on{display:block}
+  .chead{background:var(--c);padding:calc(10px + var(--safe-t)) 12px 16px;color:#fff;position:relative;
+    background-image:linear-gradient(45deg,#ffffff14 25%,transparent 25% 75%,#ffffff14 75%),linear-gradient(45deg,#ffffff14 25%,transparent 25% 75%,#ffffff14 75%);
+    background-size:16px 16px;background-position:0 0,8px 8px;border-bottom:var(--px) solid var(--ink)}
+  .crow{display:flex;justify-content:space-between;align-items:center;font-family:var(--f-pix);font-size:11px}
+  .crow button{background:none;color:#fff;font-size:11px;padding:8px 0}
+  .portrait{width:184px;height:184px;margin:12px auto 0;padding:0;background:var(--paper)}
+  .portrait canvas,.portrait div{width:100%;height:100%;display:block;image-rendering:pixelated}
+  .portrait div{display:flex;align-items:center;justify-content:center;font-family:var(--f-pix);font-size:44px;color:var(--c)}
+  .cbody{padding:16px 14px calc(30px + var(--safe-b));max-width:480px;margin:0 auto}
+  .nameplate{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:4px 4px 0}
+  .nameplate h2{font-family:var(--f-pix);font-size:20px;margin:0;line-height:1.3;word-break:break-word}
+  .nameplate .lv{font-family:var(--f-pix);font-size:10px;white-space:nowrap}
+  .specie{font-size:22px;color:#566c86;margin:6px 4px 10px}
+  .type{display:inline-block;font-family:var(--f-pix);font-size:11px;padding:8px 10px;background:var(--c);color:#fff;margin:4px 8px 4px 8px}
+  .type span{margin-right:6px}
+  #cDesc{margin-top:16px;font-size:26px;line-height:1.05;min-height:96px}
+  .menu{display:flex;gap:4px;margin:22px 4px 14px;font-family:var(--f-pix)}
+  .menu button{flex:1;background:none;font-size:10px;padding:10px 2px;text-align:center;position:relative}
+  .menu button.on{background:var(--ink);color:var(--paper)}
+  .menu button.on::before{content:"▶";margin-right:4px}
+  .pane{display:none}
+  .pane.on{display:block}
+  .stat{margin:0 4px 14px}
+  .stat .top{display:flex;justify-content:space-between;font-family:var(--f-pix);font-size:9px;margin-bottom:6px;gap:8px}
+  .stat .top .k{text-transform:uppercase;line-height:1.4}
+  .hp{display:flex;align-items:center;gap:6px}
+  .hp .tag{font-family:var(--f-pix);font-size:8px;background:var(--ink);color:#ffcd75;padding:3px 4px}
+  .hp .bar{flex:1;height:14px;background:var(--ink);padding:3px;display:flex;gap:2px}
+  .hp .bar i{flex:1;background:#3a3c4e}
+  .hp .bar i.f{background:var(--hp-g)}
+  .hp.mid .bar i.f{background:var(--hp-y)}
+  .hp.low .bar i.f{background:var(--hp-r)}
+  .weak{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 4px}
+  .weak .px{text-align:center;padding:10px 4px 8px}
+  .weak .ic{font-size:26px;line-height:1}
+  .weak .x{font-family:var(--f-pix);font-size:11px;margin-top:8px}
+  .weak .n{font-size:19px;color:#566c86;margin-top:4px;line-height:1}
+  .sect{font-family:var(--f-pix);font-size:11px;margin:24px 4px 10px}
+  .abil{margin:0 4px;font-size:24px}
+  #cProva{font-size:26px;line-height:1.1;min-height:120px}
+  .prova-t{font-family:var(--f-pix);font-size:10px;color:var(--c);margin-bottom:10px;line-height:1.5}
+  #catchBtn{display:block;width:calc(100% - 8px);margin:20px 4px 0;font-size:12px;padding:16px;background:var(--c);color:#fff}
+  #catchBtn.done{background:var(--hp-g)}
+  .stamp{display:none;margin:22px auto 0;width:max-content;font-family:var(--f-pix);font-size:16px;color:var(--hp-g);
+    border:var(--px) solid var(--hp-g);padding:10px 14px;transform:rotate(-6deg)}
+  .stamp.on{display:block;animation:stamp .3s steps(3)}
+  @keyframes stamp{from{transform:rotate(-6deg) scale(2);opacity:0}}
+  .dbg{font-size:18px;color:#ffffffcc;text-align:center;margin-top:6px;min-height:0}
+
+  /* ---------- LISTA ---------- */
+  #lista{background:var(--paper);overflow-y:auto}
+  .lhead{display:flex;align-items:center;gap:10px;padding:calc(14px + var(--safe-t)) 12px 12px;background:var(--c);color:#fff;
+    border-bottom:var(--px) solid var(--ink);font-family:var(--f-pix);font-size:12px}
+  .lhead button{background:none;color:#fff;font-size:12px}
+  .items{padding:12px 10px 18px;display:grid;gap:10px}
+  .item{display:flex;align-items:center;gap:12px;padding:8px 10px;text-align:left;width:calc(100% - 8px);font-family:var(--f-txt);font-size:24px}
+  .item:active{background:#ffcd75}
+  .av{width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;font-family:var(--f-pix);font-size:13px;color:#fff;background:var(--c)}
+  .av canvas{width:100%;height:100%;image-rendering:pixelated}
+  .item .nm{flex:1;line-height:1}
+  .item .nm small{display:block;color:#566c86;font-size:19px}
+  .item .ck{font-family:var(--f-pix);font-size:10px}
+  .lfoot{padding:0 12px calc(30px + var(--safe-b));display:flex;gap:12px;flex-wrap:wrap}
+  a.pbtn{text-decoration:none;display:inline-block}
+
+  /* ---------- DEX (griglia creature) ---------- */
+  #count{cursor:pointer}
+  #count:active{background:#ffcd75}
+  #dex{background:var(--paper);overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .dgrid{padding:12px 10px calc(24px + var(--safe-b));display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .tile{display:block;padding:6px 6px 8px;text-align:center;background:var(--paper);width:calc(100% - 8px);font-family:var(--f-pix)}
+  .tile .th{aspect-ratio:1;width:100%;background:var(--tc,#3b5dc9);border-bottom:var(--px) solid var(--ink);overflow:hidden;position:relative}
+  .tile .th canvas,.tile .th>div{width:100%;height:100%;display:block;image-rendering:pixelated}
+  .tile:not(.lock) .th>div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px}
+  .tile .num{font-size:8px;margin-top:8px;color:#566c86}
+  .tile .nm{font-family:var(--f-txt);font-size:20px;line-height:1;margin-top:5px;min-height:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tile:active{background:#ffcd75}
+  .tile.lock{opacity:.95}
+  .tile.lock .th{background:var(--shade)}
+  .tile.lock .sil{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(12,1fr);padding:14%}
+  .tile.lock .sil i{display:block}
+  .tile.lock .nm{color:#566c86}
+  .tile.lock:active{background:var(--paper);animation:nope .25s steps(2) 1}
+  @keyframes nope{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<section id="splash" class="view on">
+  <div class="ball" id="ball"></div>
+  <div class="logo" id="sTitle">DEX</div>
+  <div id="sSub"></div>
+  <button id="startBtn" class="blink">▶ PREMI START</button>
+  <div id="loadmsg"></div>
+</section>
+
+<!-- SCANNER -->
+<section id="scanner" class="view">
+  <video id="video" playsinline muted autoplay></video>
+  <div class="screen" id="screen">
+    <canvas id="pix"></canvas>
+    <div class="topbar">
+      <span class="px" id="tTitle">DEX</span>
+      <span class="px" id="count">▤ 0/0</span>
+    </div>
+    <div class="frame"><i></i><i></i><i></i><i></i></div>
+    <div id="analisi"><b style="top:0"></b><b style="top:12.5%"></b><b style="top:25%"></b><b style="top:37.5%"></b><b style="top:50%"></b><b style="top:62.5%"></b><b style="top:75%"></b><b style="top:87.5%"></b><div class="lbl">ANALISI<span class="blink">...</span></div></div>
+  </div>
+  <div class="panel">
+    <div class="dlg more" id="say"></div>
+    <div class="ctr">
+      <button class="pbtn px" id="torchBtn">LUCE</button>
+      <button class="px" id="scanbtn">SCAN</button>
+      <button class="pbtn px" id="flipBtn">CAM</button>
+    </div>
+  </div>
+</section>
+
+<!-- SCHEDA -->
+<section id="scheda" class="view">
+  <div class="chead">
+    <div class="crow"><button id="backBtn">◀ ESCI</button><span id="cNum">N°001</span></div>
+    <div class="portrait px" id="cPhoto"></div>
+    <div class="dbg" id="cDbg"></div>
+  </div>
+  <div class="cbody">
+    <div class="nameplate"><h2 id="cName"></h2><span class="lv" id="cLv"></span></div>
+    <div class="specie" id="cSpecie"></div>
+    <div class="type px" id="cBadge"></div>
+    <div class="dlg" id="cDesc"></div>
+    <div class="menu">
+      <button data-tab="stats" class="on">STAT</button>
+      <button data-tab="weak">DEBOL.</button>
+      <button data-tab="prova">PROVA</button>
+    </div>
+    <div class="pane on" id="p-stats"></div>
+    <div class="pane" id="p-weak">
+      <div class="weak" id="cWeak"></div>
+      <div class="sect">▶ ABILITÀ</div>
+      <div class="abil" id="cAbil"></div>
+    </div>
+    <div class="pane" id="p-prova">
+      <div class="dlg more"><div class="prova-t">! PROVA PER L'ALLENATORE !</div><div id="cProva"></div></div>
+      <button class="px" id="catchBtn">PROVA SUPERATA: CATTURA!</button>
+      <div class="stamp" id="stamp">CATTURATO!</div>
+    </div>
+  </div>
+</section>
+
+<!-- DEX: griglia delle creature (tocca il contatore nello scanner) -->
+<section id="dex" class="view">
+  <div class="lhead"><button id="dClose">◀</button><span>DEX</span><span id="dCount" style="margin-left:auto">0/0</span></div>
+  <div class="dgrid" id="dGrid"></div>
+</section>
+
+<!-- LISTA MANUALE (tieni premuto il titolo nello scanner) -->
+<section id="lista" class="view">
+  <div class="lhead"><button id="lClose">◀</button><span>TUTTE LE CREATURE</span></div>
+  <div class="items" id="lItems"></div>
+  <div class="lfoot">
+    <button class="pbtn px" id="lReset">AZZERA</button>
+  </div>
+</section>
+
+<script src="lib/face-api.js"></script>
+<script>
+/* Carica dati.js e volti.js sempre aggiornati (evita la cache di GitHub Pages).
+   Con #anteprima usa la bozza del pannello admin salvata in questo browser. */
+(function boot(){
+  if (location.hash === "#anteprima"){
+    try{
+      const p = JSON.parse(localStorage.getItem("dex_preview"));
+      window.DEX_CONFIG = p.config; window.DEX_DATA = p.data; window.DEX_VOLTI = p.volti;
+    }catch(e){}
+    return dexMain();
+  }
+  const v = Date.now(); let n = 0;
+  ["dati.js","volti.js"].forEach(f => {
+    const sc = document.createElement("script");
+    sc.src = f + "?v=" + v;
+    sc.onload = sc.onerror = () => { if (++n === 2) dexMain(); };
+    document.body.appendChild(sc);
+  });
+})();
+
+function dexMain(){
+  const CFG  = Object.assign({titolo:"DEX", sottotitolo:"", soglia:0.5}, window.DEX_CONFIG || {});
+  const DATA = window.DEX_DATA || [];
+  const byId = Object.fromEntries(DATA.map(p => [p.id, p]));
+  const $ = s => document.querySelector(s);
+  const store = {
+    get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+    del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  };
+
+  const PREVIEW = location.hash === "#anteprima";
+  let volti = window.DEX_VOLTI || {};
+  let soglia = CFG.soglia;
+  let debug = PREVIEW;
+  let catturati = new Set(store.get("dex_catturati", []));
+
+  document.title = CFG.titolo;
+  $("#sTitle").textContent = CFG.titolo;
+  $("#tTitle").textContent = CFG.titolo;
+  $("#sSub").textContent = (CFG.sottotitolo || "").toUpperCase() + (PREVIEW ? " · ANTEPRIMA" : "");
+
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const initials = n => (n || "?").split(/\s+/).map(w => w[0]).join("").slice(0,2).toUpperCase();
+
+  // ---------- PAPILLON PIXEL DELLO SPLASH (disegno originale) ----------
+  (() => {
+    const m = [
+      "............","XX........XX","XRX......XRX","XRRX.XX.XRRX","XRRRXRRXRRRX","XRRRRXXRRRRX",
+      "XRRRRXXRRRRX","XRRRXRRXRRRX","XRRX.XX.XRRX","XRX......XRX","XX........XX","............"];
+    const col = {".":"transparent","X":"#f4f4e8","R":"#b13e53"};
+    $("#ball").innerHTML = m.join("").split("").map(ch => `<i style="background:${col[ch]}"></i>`).join("");
+  })();
+
+  // ---------- SUONI 8-BIT ----------
+  let actx;
+  function beep(notes, dur=.07, type="square", vol=.06){
+    try{
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      let t = actx.currentTime;
+      for (const f of notes){
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.type = type; o.frequency.value = f; g.gain.value = vol;
+        o.connect(g); g.connect(actx.destination);
+        o.start(t); o.stop(t + dur); t += dur;
+      }
+    }catch(e){}
+  }
+  const SFX = {
+    start:()=>beep([523,659,784,1046],.08),
+    click:()=>beep([880],.04),
+    scan:()=>beep([300,400,300,400,300,400],.05,"square",.04),
+    found:()=>beep([784,988,1175,1568],.09),
+    fail:()=>beep([330,220],.14,"square",.05),
+    capture:()=>beep([523,523,523,659,784,659,784,1046],.09)
+  };
+
+  // ---------- TESTO "MACCHINA DA SCRIVERE" ----------
+  const typing = new WeakMap();
+  function typeText(el, text, speed=22){
+    const token = {}; typing.set(el, token);
+    el.textContent = "";
+    let i = 0;
+    return new Promise(res => {
+      const step = () => {
+        if (typing.get(el) !== token) return res();
+        el.textContent = text.slice(0, ++i);
+        if (i < text.length) setTimeout(step, speed); else res();
+      };
+      text ? step() : res();
+    });
+  }
+  const say = (t) => typeText($("#say"), t);
+
+  // ---------- FOTO PIXELATA ----------
+  function pixelPhoto(p, box, res=48){
+    box.innerHTML = "";
+    const fallback = () => { const d = document.createElement("div"); d.textContent = initials(p.nome); box.appendChild(d); };
+    if (!p.foto) return fallback();
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width = c.height = res;
+      const s = Math.min(img.width, img.height);
+      const ctx = c.getContext("2d"); ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(img, (img.width - s)/2, (img.height - s)/2, s, s, 0, 0, res, res);
+      // riduzione colori stile 8-bit
+      const d = ctx.getImageData(0,0,res,res), a = d.data, q = 48;
+      for (let i = 0; i < a.length; i += 4){ a[i]=Math.round(a[i]/q)*q; a[i+1]=Math.round(a[i+1]/q)*q; a[i+2]=Math.round(a[i+2]/q)*q; }
+      ctx.putImageData(d,0,0);
+      box.appendChild(c);
+    };
+    img.onerror = fallback;
+    img.src = p.foto;
+  }
+
+  // ---------- MODELLI ----------
+  let modelsReady = null;
+  function loadModels(onMsg){
+    if (modelsReady) return modelsReady;
+    modelsReady = (async () => {
+      onMsg && onMsg("Avvio del motore…");
+      try { await faceapi.tf.setBackend("webgl"); } catch(e) {}
+      await faceapi.tf.ready();
+      if (!faceapi.tf.getBackend()) { await faceapi.tf.setBackend("cpu"); await faceapi.tf.ready(); }
+      onMsg && onMsg("Caricamento dati ▮▯▯");
+      await faceapi.nets.ssdMobilenetv1.loadFromUri("models");
+      onMsg && onMsg("Caricamento dati ▮▮▯");
+      await faceapi.nets.faceLandmark68Net.loadFromUri("models");
+      onMsg && onMsg("Caricamento dati ▮▮▮");
+      await faceapi.nets.faceRecognitionNet.loadFromUri("models");
+      onMsg && onMsg("Pronto!");
+    })();
+    return modelsReady;
+  }
+
+  async function bestFace(input){
+    const res = await faceapi.detectAllFaces(input, new faceapi.SsdMobilenetv1Options({minConfidence:0.5}))
+      .withFaceLandmarks().withFaceDescriptors();
+    if (!res.length) return null;
+    res.sort((a,b) => b.detection.box.area - a.detection.box.area);
+    return { desc: res[0].descriptor, count: res.length };
+  }
+
+  function rank(desc){
+    const out = [];
+    for (const [id, list] of Object.entries(volti)){
+      if (!byId[id] || !list.length) continue;
+      let min = Infinity;
+      for (const d of list) min = Math.min(min, faceapi.euclideanDistance(desc, d));
+      out.push({id, dist:min});
+    }
+    return out.sort((a,b) => a.dist - b.dist);
+  }
+
+  // ---------- NAVIGAZIONE ----------
+  function show(id){
+    document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === id));
+  }
+  let appStarted = false;
+  function route(){
+    if (appStarted) { openScanner(); }
+    else show("splash");
+  }
+  
+
+  function openScanner(){
+    document.documentElement.style.setProperty("--c", "#3b5dc9");
+    show("scanner"); startCamera();
+    say(Object.keys(volti).length ? "Inquadra una creatura selvatica e premi SCAN!" : "Nessun volto registrato! Aggiungili dal pannello admin.");
+  }
+
+  // ---------- CAMERA (anteprima pixelata) ----------
+  const video = $("#video"), pix = $("#pix"), pctx = pix.getContext("2d");
+  let stream = null, facing = "environment", torch = false, frozen = false, raf = 0;
+  // Effetto pixel: larghezza dell'anteprima in pixel (più alta = effetto più leggero, 0 = nessun effetto)
+  const PIX_W = CFG.pixel === undefined ? 360 : +CFG.pixel;
+  video.classList.toggle("full", !PIX_W); pix.style.display = PIX_W ? "" : "none";
+  function draw(){
+    if (!PIX_W) return;
+    raf = requestAnimationFrame(draw);
+    if (frozen || !video.videoWidth) return;
+    const h = Math.round(PIX_W * video.videoHeight / video.videoWidth);
+    if (pix.width !== PIX_W || pix.height !== h){ pix.width = PIX_W; pix.height = h; }
+    pctx.save();
+    if (facing === "user"){ pctx.translate(PIX_W,0); pctx.scale(-1,1); }
+    pctx.imageSmoothingEnabled = true;
+    pctx.drawImage(video, 0, 0, PIX_W, h);
+    pctx.restore();
+  }
+  async function startCamera(){
+    if (stream) return;
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio:false, video:{ facingMode:{ideal:facing}, width:{ideal:1280}, height:{ideal:960} }
+      });
+      video.srcObject = stream;
+      await video.play().catch(()=>{});
+      const track = stream.getVideoTracks()[0];
+      const caps = track.getCapabilities ? track.getCapabilities() : {};
+      $("#torchBtn").style.visibility = caps.torch ? "visible" : "hidden";
+      video.style.transform = (!PIX_W && facing === "user") ? "scaleX(-1)" : "";
+      cancelAnimationFrame(raf); draw();
+    }catch(e){
+      say("Fotocamera non disponibile! Serve un sito https e il permesso.");
+      console.error(e);
+    }
+  }
+  function stopCamera(){
+    cancelAnimationFrame(raf);
+    if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+  }
+  $("#flipBtn").onclick = () => { SFX.click(); facing = facing === "environment" ? "user" : "environment"; stopCamera(); startCamera(); };
+  $("#torchBtn").onclick = async () => {
+    if (!stream) return;
+    SFX.click(); torch = !torch;
+    try{ await stream.getVideoTracks()[0].applyConstraints({advanced:[{torch}]}); $("#torchBtn").classList.toggle("on", torch); }
+    catch(e){ torch = false; }
+  };
+  function updateCount(){ $("#count").textContent = `▤ ${[...catturati].filter(id=>byId[id]).length}/${DATA.length}`; }
+
+  // ---------- AVVIO ----------
+  $("#startBtn").onclick = async () => {
+    const b = $("#startBtn"); b.disabled = true; SFX.start();
+    try{
+      await loadModels(m => $("#loadmsg").textContent = m);
+      appStarted = true; updateCount(); route();
+    }catch(e){
+      console.error(e); $("#loadmsg").textContent = "Errore nel caricamento. Apri l'app da un indirizzo https.";
+      b.disabled = false;
+    }
+  };
+
+  // ---------- SCAN ----------
+  let busy = false;
+  $("#scanbtn").onclick = async () => {
+    if (busy || !stream || !video.videoWidth) return;
+    busy = true; frozen = true; SFX.scan();
+    const c = document.createElement("canvas");
+    c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext("2d").drawImage(video, 0, 0);
+    say("...");
+    const t0 = performance.now();
+    let result = null, err = null;
+    try{
+      const f = await bestFace(c);
+      if (f) { const r = rank(f.desc); result = {face:true, best:r[0], second:r[1]}; }
+      else result = {face:false};
+    }catch(e){ err = e; console.error(e); }
+    const wait = Math.max(0, 700 - (performance.now() - t0));
+    await new Promise(r => setTimeout(r, wait));
+
+    const ok = !err && result.face && result.best && result.best.dist <= soglia;
+    if (!ok){
+      frozen = false; busy = false; SFX.fail();
+      if (err) return say("Errore di analisi! Riprova.");
+      if (!result.face) return say("Nessun volto in vista! Avvicinati alla creatura.");
+      return say(debug && result.best
+        ? `Creatura sconosciuta! (${byId[result.best.id].nome} ${result.best.dist.toFixed(2)})`
+        : "Creatura sconosciuta! Inquadra meglio e riprova.");
+    }
+    // transizione "battaglia"
+    const scr = $("#screen"); scr.classList.remove("flash"); void scr.offsetWidth; scr.classList.add("flash");
+    $("#analisi").classList.add("on");
+    await new Promise(r => setTimeout(r, 1500));
+    $("#analisi").classList.remove("on"); frozen = false; busy = false;
+    SFX.found();
+    openCard(result.best.id, debug ? `dist ${result.best.dist.toFixed(3)}${result.second ? " · 2° "+byId[result.second.id].nome+" "+result.second.dist.toFixed(3) : ""}` : "");
+  };
+
+  // ---------- SCHEDA ----------
+  let current = null;
+  let cardFrom = "";
+  function openCard(id, dbg="", from=""){
+    const p = byId[id]; if (!p) return;
+    current = id; cardFrom = from;
+    stopCamera();
+    document.documentElement.style.setProperty("--c", p.colore || "#3b5dc9");
+    const num = String(p.numero ?? DATA.indexOf(p)+1).padStart(3,"0");
+    $("#cNum").textContent = "N°" + num;
+    pixelPhoto(p, $("#cPhoto"), 48);
+    $("#cDbg").textContent = dbg;
+    $("#cName").textContent = (p.nome || "").toUpperCase();
+    const vals = Object.values(p.statistiche || {});
+    $("#cLv").textContent = "Lv" + (vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : 1);
+    $("#cSpecie").textContent = p.specie ? "Specie: " + p.specie : "";
+    $("#cBadge").innerHTML = `<span>${esc(p.icona||"")}</span>${esc((p.tipo||"").toUpperCase())}`;
+    $("#p-stats").innerHTML = Object.entries(p.statistiche || {}).map(([k,v]) => {
+      v = Math.max(0, Math.min(100, +v || 0));
+      const blocks = Math.round(v / 10), cls = v > 50 ? "" : v > 20 ? "mid" : "low";
+      return `<div class="stat"><div class="top"><span class="k">${esc(k)}</span><span>${String(v).padStart(3,"0")}/100</span></div>
+        <div class="hp ${cls}"><span class="tag">PT</span><span class="bar">${Array.from({length:10},(_,i)=>`<i data-f="${i<blocks?1:0}"></i>`).join("")}</span></div></div>`;
+    }).join("");
+    $("#cWeak").innerHTML = (p.debolezze || []).map(w =>
+      `<div class="px"><div class="ic">${esc(w.icona)}</div><div class="x">${esc(w.valore)}</div><div class="n">${esc(w.nome)}</div></div>`).join("");
+    $("#cAbil").textContent = p.abilita || "";
+    $("#cProva").textContent = "";
+    setCaught(catturati.has(id), false);
+    selectTab("stats", false);
+    show("scheda");
+    $("#scheda").scrollTop = 0;
+    typeText($("#cDesc"), p.descrizione || "");
+    // riempimento barre a blocchi
+    const cells = [...document.querySelectorAll('#p-stats .bar i[data-f="1"]')];
+    cells.forEach((el, i) => setTimeout(() => el.classList.add("f"), 300 + i * 30));
+  }
+  function selectTab(t, sound=true){
+    if (sound) SFX.click();
+    document.querySelectorAll(".menu button").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
+    document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "p-" + t));
+    if (t === "prova" && current) typeText($("#cProva"), byId[current].prova || "", 30);
+  }
+  document.querySelectorAll(".menu button").forEach(b => b.onclick = () => selectTab(b.dataset.tab));
+  function setCaught(on, anim=true){
+    const b = $("#catchBtn"), s = $("#stamp");
+    b.classList.toggle("done", on);
+    b.textContent = on ? "✓ GIÀ CATTURATO" : "PROVA SUPERATA: CATTURA!";
+    s.classList.remove("on"); if (on){ void s.offsetWidth; s.classList.add("on"); }
+  }
+  $("#catchBtn").onclick = () => {
+    if (!current) return;
+    if (catturati.has(current)) { catturati.delete(current); SFX.click(); }
+    else { catturati.add(current); SFX.capture(); }
+    store.set("dex_catturati", [...catturati]);
+    setCaught(catturati.has(current)); updateCount();
+  };
+  $("#backBtn").onclick = () => { SFX.click(); if (cardFrom === "dex") openDex(); else openScanner(); };
+
+  // ---------- DEX: GRIGLIA CREATURE ----------
+  const SIL = [
+    "....XXXX....","...XXXXXX...","...XXXXXX...","...XXXXXX...","...XXXXXX...","....XXXX....",
+    ".....XX.....","..XXXXXXXX..",".XXXXXXXXXX.","XXXXXXXXXXXX","XXXXXXXXXXXX","XXXXXXXXXXXX"].join("");
+  const silHTML = SIL.split("").map(ch => `<i style="background:${ch==="X" ? "#1a1c2c" : "transparent"}"></i>`).join("");
+  function openDex(){
+    SFX.click();
+    document.documentElement.style.setProperty("--c", "#3b5dc9");
+    const n = DATA.filter(p => catturati.has(p.id)).length;
+    $("#dCount").textContent = `${n}/${DATA.length}`;
+    $("#dGrid").innerHTML = DATA.map((p, i) => {
+      const num = String(p.numero ?? i+1).padStart(3,"0");
+      const got = catturati.has(p.id);
+      return got
+        ? `<button class="tile px" data-id="${esc(p.id)}" style="--tc:${esc(p.colore||"#3b5dc9")}">
+             <div class="th"></div><div class="num">N°${num}</div><div class="nm">${esc(p.nome)}</div></button>`
+        : `<button class="tile lock px" data-lock="1">
+             <div class="th"><div class="sil">${silHTML}</div></div><div class="num">N°${num}</div><div class="nm">???</div></button>`;
+    }).join("");
+    document.querySelectorAll("#dGrid .tile").forEach(b => {
+      if (b.dataset.lock) { b.onclick = () => SFX.fail(); return; }
+      pixelPhoto(byId[b.dataset.id], b.querySelector(".th"), 32);
+      b.onclick = () => { SFX.found(); openCard(b.dataset.id, "", "dex"); };
+    });
+    stopCamera(); show("dex"); $("#dex").scrollTop = 0;
+  }
+  $("#count").onclick = openDex;
+  $("#dClose").onclick = () => { SFX.click(); openScanner(); };
+
+  // ---------- LISTA MANUALE (pressione lunga sul titolo) ----------
+  let lpT;
+  const title = $("#tTitle");
+  const startLP = () => { lpT = setTimeout(openList, 700); };
+  const endLP = () => clearTimeout(lpT);
+  title.addEventListener("touchstart", startLP, {passive:true});
+  title.addEventListener("touchend", endLP);
+  title.addEventListener("mousedown", startLP);
+  title.addEventListener("mouseup", endLP);
+  title.addEventListener("contextmenu", e => e.preventDefault());
+  function openList(){
+    SFX.click();
+    document.documentElement.style.setProperty("--c", "#3b5dc9");
+    $("#lItems").innerHTML = DATA.map(p => `
+      <button class="item px" data-id="${esc(p.id)}">
+        <span class="av" style="background:${esc(p.colore)}"></span>
+        <span class="nm">${esc(p.nome)}<small>${esc(p.specie||"")} · ${esc(p.tipo||"")}</small></span>
+        <span class="ck">${catturati.has(p.id) ? "✓" : "?"}</span>
+      </button>`).join("");
+    document.querySelectorAll("#lItems .item").forEach(b => {
+      pixelPhoto(byId[b.dataset.id], b.querySelector(".av"), 24);
+      b.onclick = () => { SFX.found(); openCard(b.dataset.id); };
+    });
+    stopCamera(); show("lista");
+  }
+  $("#lClose").onclick = () => { SFX.click(); openScanner(); };
+  $("#lReset").onclick = () => { catturati.clear(); store.set("dex_catturati", []); updateCount(); openList(); };
+
+  route();
+}
+</script>
+</body>
+</html>
