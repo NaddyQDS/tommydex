@@ -319,10 +319,30 @@ function dexMain(){
   })();
 
   // ---------- SUONI 8-BIT ----------
-  let actx;
-  function beep(notes, dur=.07, type="square", vol=.06){
+  let actx, unlocked = false;
+  // iOS: l'audio web viene silenziato dal tasto laterale e parte solo dopo un tocco.
+  // "playback" + un file audio silenzioso in loop lo fanno suonare comunque.
+  function unlockAudio(){
+    try{ if (navigator.audioSession) navigator.audioSession.type = "playback"; }catch(e){}
     try{
       actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state !== "running") actx.resume();
+      if (!unlocked){
+        unlocked = true;
+        const n = 800, b = new ArrayBuffer(44 + n*2), v = new DataView(b);
+        const w = (o, t) => [...t].forEach((c, i) => v.setUint8(o+i, c.charCodeAt(0)));
+        w(0,"RIFF"); v.setUint32(4,36+n*2,true); w(8,"WAVEfmt "); v.setUint32(16,16,true); v.setUint16(20,1,true);
+        v.setUint16(22,1,true); v.setUint32(24,8000,true); v.setUint32(28,16000,true); v.setUint16(32,2,true);
+        v.setUint16(34,16,true); w(36,"data"); v.setUint32(40,n*2,true);
+        const a = new Audio(URL.createObjectURL(new Blob([b], {type:"audio/wav"})));
+        a.loop = true; a.setAttribute("playsinline",""); a.play().catch(()=>{});
+      }
+    }catch(e){}
+  }
+  ["touchstart","touchend","click"].forEach(ev => document.addEventListener(ev, unlockAudio, {passive:true}));
+  function beep(notes, dur=.07, type="square", vol=.15){
+    try{
+      unlockAudio();
       let t = actx.currentTime;
       for (const f of notes){
         const o = actx.createOscillator(), g = actx.createGain();
@@ -335,9 +355,9 @@ function dexMain(){
   const SFX = {
     start:()=>beep([523,659,784,1046],.08),
     click:()=>beep([880],.04),
-    scan:()=>beep([300,400,300,400,300,400],.05,"square",.04),
+    scan:()=>beep([300,400,300,400,300,400],.05,"square",.1),
     found:()=>beep([784,988,1175,1568],.09),
-    fail:()=>beep([330,220],.14,"square",.05),
+    fail:()=>beep([330,220],.14,"square",.12),
     capture:()=>beep([523,523,523,659,784,659,784,1046],.09)
   };
 
