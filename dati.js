@@ -5,19 +5,19 @@ window.DEX_CONFIG = {
   "soglia": 0.5,
   "pixel": 360,
   "allenatore": "Allenatore: lo Sposo",
-  "versione": 1794863166118
+  "versione": 1794863859523
 };
 
 window.DEX_DATA = [
   {
     "id": "esempio1",
     "numero": 1,
-    "nome": "Marco",
+    "nome": "Cristian",
     "specie": "Spritzard",
     "tipo": "Aperitivo",
     "icona": "🍹",
     "colore": "#F28C38",
-    "foto": "foto/esempio1.jpg",
+    "foto": "foto/esempio1.jpg?v=1794863859523",
     "descrizione": "Compare puntuale solo all'ora dell'aperitivo. In natura è stato avvistato raramente prima delle 18:00.",
     "statistiche": {
       "Resistenza alcolica": 88,
