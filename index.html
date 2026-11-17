@@ -54,10 +54,26 @@
     background:var(--ink);background-image:radial-gradient(#ffffff10 1px,transparent 1px);background-size:8px 8px}
   .logo{font-family:var(--f-pix);font-size:28px;line-height:1.3;color:#ffcd75;
     text-shadow:4px 4px 0 #b13e53,8px 8px 0 #29366f;letter-spacing:2px}
-  .ball{width:96px;height:96px;margin:0 auto 34px;display:grid;grid-template-columns:repeat(12,1fr);image-rendering:pixelated}
-  .ball i{display:block}
+  /* personaggio animato della schermata iniziale */
+  .mascot{position:relative;height:min(42vh,330px);aspect-ratio:356/640;margin:0 auto 26px;animation:drop .7s steps(7) both}
+  .mascot img{position:relative;z-index:1;width:100%;height:100%;display:block;image-rendering:pixelated;
+    animation:hop 1.2s steps(2) .7s infinite;transform-origin:50% 100%}
+  .mascot .shadow{position:absolute;left:18%;right:18%;bottom:-8px;height:14px;border-radius:50%;background:#00000070;
+    animation:shadow 1.2s steps(2) .7s infinite}
+  .mascot .spark{position:absolute;z-index:2;width:14px;height:14px;opacity:0;
+    background:linear-gradient(#ffcd75,#ffcd75) center/4px 100% no-repeat,linear-gradient(#ffcd75,#ffcd75) center/100% 4px no-repeat;
+    animation:spark 1.6s steps(1) infinite}
+  .mascot .s1{right:-6%;top:16%;animation-delay:.9s}
+  .mascot .s2{right:10%;top:9%;width:10px;height:10px;animation-delay:1.3s}
+  .mascot .s3{right:-2%;top:30%;width:8px;height:8px;animation-delay:1.7s}
+  .mascot.jump img{animation:jump .5s steps(5) 1}
+  @keyframes drop{from{transform:translateY(-120vh)}to{transform:none}}
+  @keyframes hop{50%{transform:translateY(-10px) scaleY(1.02)}}
+  @keyframes shadow{50%{transform:scaleX(.82);opacity:.7}}
+  @keyframes spark{0%{opacity:1}25%{opacity:0}}
+  @keyframes jump{40%{transform:translateY(-60px)}}
   #sSub{font-family:var(--f-pix);font-size:10px;margin-top:22px;color:#73eff7;line-height:1.6}
-  #startBtn{margin-top:46px;font-size:16px;background:none;color:var(--paper);padding:10px}
+  #startBtn{margin-top:34px;font-size:16px;background:none;color:var(--paper);padding:10px}
   #startBtn:disabled{animation:none;opacity:.5}
   #loadmsg{margin-top:16px;font-size:20px;color:var(--shade);min-height:24px}
 
@@ -207,7 +223,7 @@
 
 <!-- SPLASH -->
 <section id="splash" class="view on">
-  <div class="ball" id="ball"></div>
+  <div class="mascot" id="mascot"><span class="shadow"></span><img src="tommy.png" alt=""><i class="spark s1"></i><i class="spark s2"></i><i class="spark s3"></i></div>
   <div class="logo" id="sTitle">DEX</div>
   <div id="sSub"></div>
   <button id="startBtn" class="blink">▶ PREMI START</button>
@@ -327,15 +343,6 @@ function dexMain(){
 
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const initials = n => (n || "?").split(/\s+/).map(w => w[0]).join("").slice(0,2).toUpperCase();
-
-  // ---------- PAPILLON PIXEL DELLO SPLASH (disegno originale) ----------
-  (() => {
-    const m = [
-      "............","XX........XX","XRX......XRX","XRRX.XX.XRRX","XRRRXRRXRRRX","XRRRRXXRRRRX",
-      "XRRRRXXRRRRX","XRRRXRRXRRRX","XRRX.XX.XRRX","XRX......XRX","XX........XX","............"];
-    const col = {".":"transparent","X":"#f4f4e8","R":"#b13e53"};
-    $("#ball").innerHTML = m.join("").split("").map(ch => `<i style="background:${col[ch]}"></i>`).join("");
-  })();
 
   // ---------- SUONI 8-BIT ----------
   let actx, unlocked = false;
@@ -536,6 +543,7 @@ function dexMain(){
   // ---------- AVVIO ----------
   $("#startBtn").onclick = async () => {
     const b = $("#startBtn"); b.disabled = true; SFX.start();
+    const m = $("#mascot"); m.classList.remove("jump"); void m.offsetWidth; m.classList.add("jump");
     try{
       await loadModels(m => $("#loadmsg").textContent = m);
       appStarted = true; updateCount(); route();
