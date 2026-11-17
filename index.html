@@ -199,6 +199,8 @@
 
   /* ---------- DEX (griglia creature) ---------- */
   #count{cursor:pointer}
+  #musicBtn{cursor:pointer;background:var(--paper);color:var(--ink)}
+  #musicBtn.off{opacity:.6;text-decoration:line-through}
   #count:active{background:#ffcd75}
   #dex{background:var(--paper);overflow-y:auto;-webkit-overflow-scrolling:touch}
   .dgrid{padding:12px 10px calc(24px + var(--safe-b));display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -237,6 +239,7 @@
     <canvas id="pix"></canvas>
     <div class="topbar">
       <span class="px" id="tTitle">DEX</span>
+      <span class="px" id="musicBtn">♪ ON</span>
       <span class="px" id="count">▤ 0/0</span>
     </div>
     <div class="frame"><i></i><i></i><i></i><i></i></div>
@@ -540,9 +543,25 @@ function dexMain(){
   };
   function updateCount(){ $("#count").textContent = `▤ ${[...catturati].filter(id=>byId[id]).length}/${DATA.length}`; }
 
+  // ---------- MUSICA DI SOTTOFONDO ----------
+  const MUSIC = new Audio("musica.mp3");
+  MUSIC.loop = true; MUSIC.volume = .5; MUSIC.preload = "auto"; MUSIC.setAttribute("playsinline", "");
+  let musicOn = store.get("dex_music", true);
+  function musicUI(){ const b = $("#musicBtn"); b.textContent = musicOn ? "♪ ON" : "♪ OFF"; b.classList.toggle("off", !musicOn); }
+  function playMusic(){ if (musicOn && MUSIC.paused) MUSIC.play().catch(() => {}); }
+  $("#musicBtn").onclick = e => {
+    e.stopPropagation(); musicOn = !musicOn; store.set("dex_music", musicOn); musicUI();
+    if (musicOn) { SFX.click(); playMusic(); } else MUSIC.pause();
+  };
+  musicUI();
+  // se il telefono blocca l'avvio automatico, riparte al primo tocco
+  ["touchend","click"].forEach(ev => document.addEventListener(ev, () => { if (appStarted) playMusic(); }, {passive:true}));
+  // in pausa quando l'app va in background
+  document.addEventListener("visibilitychange", () => { if (document.hidden) MUSIC.pause(); else if (appStarted) playMusic(); });
+
   // ---------- AVVIO ----------
   $("#startBtn").onclick = async () => {
-    const b = $("#startBtn"); b.disabled = true; SFX.start();
+    const b = $("#startBtn"); b.disabled = true; SFX.start(); playMusic();
     const m = $("#mascot"); m.classList.remove("jump"); void m.offsetWidth; m.classList.add("jump");
     try{
       await loadModels(m => $("#loadmsg").textContent = m);
