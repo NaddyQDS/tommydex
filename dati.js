@@ -5,7 +5,7 @@ window.DEX_CONFIG = {
   "soglia": 0.5,
   "pixel": 360,
   "allenatore": "Allenatore: lo Sposo",
-  "versione": 1794863859523
+  "versione": 1794920124733
 };
 
 window.DEX_DATA = [
@@ -17,7 +17,7 @@ window.DEX_DATA = [
     "tipo": "Aperitivo",
     "icona": "🍹",
     "colore": "#F28C38",
-    "foto": "foto/esempio1.jpg?v=1794863859523",
+    "foto": "foto/esempio1.jpg?v=1794920124733",
     "descrizione": "Compare puntuale solo all'ora dell'aperitivo. In natura è stato avvistato raramente prima delle 18:00.",
     "statistiche": {
       "Resistenza alcolica": 88,
