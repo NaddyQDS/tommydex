@@ -5,7 +5,7 @@ window.DEX_CONFIG = {
   "soglia": 0.5,
   "pixel": 360,
   "allenatore": "Allenatore: lo Sposo",
-  "versione": 1794920124733
+  "versione": 1794922326087
 };
 
 window.DEX_DATA = [
@@ -65,12 +65,12 @@ window.DEX_DATA = [
   {
     "id": "esempio2",
     "numero": 2,
-    "nome": "Luca",
+    "nome": "Fitoroidmon",
     "specie": "Calcettone",
     "tipo": "Panchina",
     "icona": "⚽",
     "colore": "#3FA66B",
-    "foto": "foto/esempio2.jpg",
+    "foto": "foto/esempio2.jpg?v=1794922326087",
     "descrizione": "Si dichiara titolare inamovibile del calcetto del giovedì. I compagni di squadra non confermano.",
     "statistiche": {
       "Resistenza alcolica": 55,
