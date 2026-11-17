@@ -97,14 +97,20 @@
   /* ---------- SCHEDA ---------- */
   #scheda{background:var(--paper);overflow-y:auto;-webkit-overflow-scrolling:touch;display:none}
   #scheda.on{display:block}
-  .chead{background:var(--c);padding:calc(10px + var(--safe-t)) 12px 16px;color:#fff;position:relative;
+  /* intestazione: la foto riempie tutta l'area colorata */
+  .chead{position:relative;height:calc(min(100vw,480px) + var(--safe-t));color:#fff;overflow:hidden;
+    background:var(--c);border-bottom:var(--px) solid var(--ink);
     background-image:linear-gradient(45deg,#ffffff14 25%,transparent 25% 75%,#ffffff14 75%),linear-gradient(45deg,#ffffff14 25%,transparent 25% 75%,#ffffff14 75%);
-    background-size:16px 16px;background-position:0 0,8px 8px;border-bottom:var(--px) solid var(--ink)}
-  .crow{display:flex;justify-content:space-between;align-items:center;font-family:var(--f-pix);font-size:11px}
-  .crow button{background:none;color:#fff;font-size:11px;padding:8px 0}
-  .portrait{width:184px;height:184px;margin:12px auto 0;padding:0;background:var(--paper)}
-  .portrait canvas,.portrait div{width:100%;height:100%;display:block;image-rendering:pixelated}
-  .portrait img{width:100%;height:100%;display:block;object-fit:cover;image-rendering:auto}
+    background-size:16px 16px;background-position:0 0,8px 8px}
+  .hero{position:absolute;inset:0}
+  .hero img{width:100%;height:100%;display:block;object-fit:cover;object-position:center top;image-rendering:auto}
+  .hero div{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--f-pix);font-size:64px;color:#ffffff;text-shadow:6px 6px 0 var(--ink)}
+  .chead::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(90px + var(--safe-t));z-index:1;pointer-events:none;
+    background:linear-gradient(#000000a0,#0000)}
+  .crow{position:absolute;left:0;right:0;top:0;z-index:2;padding:calc(10px + var(--safe-t)) 14px 0;
+    display:flex;justify-content:space-between;align-items:center;font-family:var(--f-pix);font-size:11px;text-shadow:2px 2px 0 var(--ink)}
+  .crow button{background:none;color:#fff;font-size:11px;padding:8px 0;text-shadow:2px 2px 0 var(--ink)}
+  .chead .dbg{position:absolute;left:0;right:0;bottom:8px;z-index:2;text-shadow:1px 1px 0 #000}
   .portrait div{display:flex;align-items:center;justify-content:center;font-family:var(--f-pix);font-size:44px;color:var(--c)}
   .cbody{padding:16px 14px calc(30px + var(--safe-b));max-width:480px;margin:0 auto}
   .nameplate{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:4px 4px 0}
@@ -139,8 +145,15 @@
   .abil{margin:0 4px;font-size:24px}
   #cProva{font-size:26px;line-height:1.1;min-height:120px}
   .prova-t{font-family:var(--f-pix);font-size:10px;color:var(--c);margin-bottom:10px;line-height:1.5}
+  /* pulsante CATTURA in evidenza */
+  #catchOpen{display:block;width:calc(100% - 8px);margin:22px 4px 6px;font-size:20px;letter-spacing:3px;padding:22px 10px;
+    background:#ffcd75;color:var(--ink);animation:glow 1.1s steps(2) infinite}
+  #catchOpen:active{transform:translate(3px,3px)}
+  #catchOpen.done{background:var(--hp-g);color:#fff;animation:none;font-size:15px}
+  @keyframes glow{50%{background:#ffe6a8}}
+  #provaBox{margin-top:18px}
   #catchBtn{display:block;width:calc(100% - 8px);margin:20px 4px 0;font-size:12px;padding:16px;background:var(--c);color:#fff}
-  #catchBtn.done{background:var(--hp-g)}
+  #catchBtn.done{background:var(--paper);color:var(--ink);font-size:10px}
   .stamp{display:none;margin:22px auto 0;width:max-content;font-family:var(--f-pix);font-size:16px;color:var(--hp-g);
     border:var(--px) solid var(--hp-g);padding:10px 14px;transform:rotate(-6deg)}
   .stamp.on{display:block;animation:stamp .3s steps(3)}
@@ -221,8 +234,8 @@
 <!-- SCHEDA -->
 <section id="scheda" class="view">
   <div class="chead">
+    <div class="hero" id="cPhoto"></div>
     <div class="crow"><button id="backBtn">◀ ESCI</button><span id="cNum">N°001</span></div>
-    <div class="portrait px" id="cPhoto"></div>
     <div class="dbg" id="cDbg"></div>
   </div>
   <div class="cbody">
@@ -230,21 +243,21 @@
     <div class="specie" id="cSpecie"></div>
     <div class="type px" id="cBadge"></div>
     <div class="dlg" id="cDesc"></div>
+    <button class="px" id="catchOpen">⚡ CATTURA! ⚡</button>
+    <div id="provaBox" style="display:none">
+      <div class="dlg more"><div class="prova-t">! PROVA PER L'ALLENATORE !</div><div id="cProva"></div></div>
+      <button class="px" id="catchBtn">✓ PROVA SUPERATA</button>
+      <div class="stamp" id="stamp">CATTURATO!</div>
+    </div>
     <div class="menu">
       <button data-tab="stats" class="on">STAT</button>
       <button data-tab="weak">DEBOL.</button>
-      <button data-tab="prova">PROVA</button>
     </div>
     <div class="pane on" id="p-stats"></div>
     <div class="pane" id="p-weak">
       <div class="weak" id="cWeak"></div>
       <div class="sect">▶ ABILITÀ</div>
       <div class="abil" id="cAbil"></div>
-    </div>
-    <div class="pane" id="p-prova">
-      <div class="dlg more"><div class="prova-t">! PROVA PER L'ALLENATORE !</div><div id="cProva"></div></div>
-      <button class="px" id="catchBtn">PROVA SUPERATA: CATTURA!</button>
-      <div class="stamp" id="stamp">CATTURATO!</div>
     </div>
   </div>
 </section>
@@ -591,6 +604,7 @@ function dexMain(){
       `<div class="px"><div class="ic">${esc(w.icona)}</div><div class="x">${esc(w.valore)}</div><div class="n">${esc(w.nome)}</div></div>`).join("");
     $("#cAbil").textContent = p.abilita || "";
     $("#cProva").textContent = "";
+    $("#provaBox").style.display = "none";
     setCaught(catturati.has(id), false);
     selectTab("stats", false);
     show("scheda");
@@ -604,13 +618,23 @@ function dexMain(){
     if (sound) SFX.click();
     document.querySelectorAll(".menu button").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
     document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "p-" + t));
-    if (t === "prova" && current) typeText($("#cProva"), byId[current].prova || "", 30);
   }
   document.querySelectorAll(".menu button").forEach(b => b.onclick = () => selectTab(b.dataset.tab));
+  $("#catchOpen").onclick = () => {
+    if (!current) return;
+    const box = $("#provaBox"), open = box.style.display !== "none";
+    if (open && !catturati.has(current)) return;
+    SFX.found();
+    box.style.display = "block";
+    typeText($("#cProva"), byId[current].prova || "", 30);
+    setTimeout(() => box.scrollIntoView({behavior:"smooth", block:"start"}), 50);
+  };
   function setCaught(on, anim=true){
-    const b = $("#catchBtn"), s = $("#stamp");
+    const b = $("#catchBtn"), s = $("#stamp"), o = $("#catchOpen");
+    o.classList.toggle("done", on);
+    o.textContent = on ? "✓ CATTURATO!" : "⚡ CATTURA! ⚡";
     b.classList.toggle("done", on);
-    b.textContent = on ? "✓ GIÀ CATTURATO" : "PROVA SUPERATA: CATTURA!";
+    b.textContent = on ? "↺ ANNULLA CATTURA" : "✓ PROVA SUPERATA";
     s.classList.remove("on"); if (on){ void s.offsetWidth; s.classList.add("on"); }
   }
   $("#catchBtn").onclick = () => {
