@@ -5,7 +5,7 @@ window.DEX_CONFIG = {
   "soglia": 0.5,
   "pixel": 360,
   "allenatore": "Allenatore: lo Sposo",
-  "versione": 1794922326087
+  "versione": 1794922436374
 };
 
 window.DEX_DATA = [
